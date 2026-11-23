@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新建短剧 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .wizard-layout { display: grid; grid-template-columns: 1fr 300px; gap: var(--space-6); align-items: start; }
+    .step-pane { display: none; }
+    .step-pane.active { display: block; animation: revealIn .4s var(--ease-standard); }
+    .help-card { position: sticky; top: 76px; display: flex; flex-direction: column; gap: var(--space-3); }
+    .help-step { display: flex; gap: var(--space-3); align-items: flex-start; padding: var(--space-3); background: var(--surface-2); border: 1px solid var(--border-faint); border-radius: var(--radius-md); }
+    .help-step .n { width: 22px; height: 22px; border-radius: var(--radius-full); background: var(--primary); color: var(--text-inverse); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+    .help-step p { font-size: var(--font-size-caption); color: var(--text-sub); line-height: 1.55; margin: 0; }
+    .actor-list { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
+    .actor-row { display: grid; grid-template-columns: 1fr 1fr 1.4fr 88px 28px; gap: var(--space-2); align-items: center; }
+    .actor-row .ai { height: var(--size-control-md); padding: 0 var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: var(--font-size-body); font-family: var(--font-body); color: var(--text); background: var(--surface); }
+    .actor-row .ai:focus { outline: none; border-color: var(--primary); }
+    .actor-row .ai::placeholder { color: var(--text-mute); }
+    .actor-photo { height: var(--size-control-md); display: flex; align-items: center; justify-content: center; gap: var(--space-1); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); cursor: pointer; color: var(--text-mute); font-size: var(--font-size-caption); }
+    .actor-photo:hover { border-color: var(--primary); color: var(--primary); }
+    .actor-photo i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+    .batch-input { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--font-size-body); color: var(--text); font-family: var(--font-body); background: var(--surface); }
+    .batch-input:focus { outline: none; border-color: var(--primary); }
+    /* 项目选择触发框 */
+    .input-trigger { cursor: pointer; }
+    .input-trigger:hover { border-color: var(--primary); }
+    .input-trigger i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); color: var(--text-mute); flex-shrink: 0; }
+    .input-trigger .input-control { cursor: pointer; }
+    /* 项目选择弹窗 */
+    .project-modal {
+      width: 460px; max-width: 92vw; background: var(--surface);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-4); display: flex; flex-direction: column;
+      max-height: 78vh; animation: confirmIn .2s var(--ease-standard) both;
+    }
+    .project-modal-head { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border); }
+    .project-modal-title { font-family: var(--font-display); font-size: var(--font-size-h2); font-weight: var(--font-weight-h2); }
+    .project-modal-sub { font-size: var(--font-size-caption); color: var(--text-mute); }
+    .project-search { padding: var(--space-3) var(--space-5); border-bottom: 1px solid var(--border-faint); }
+    .project-list { overflow-y: auto; padding: var(--space-2); }
+    .project-item {
+      display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-md); cursor: pointer; transition: background var(--duration-fast) var(--ease-standard);
+    }
+    .project-item:hover { background: var(--surface-2); }
+    .project-item.sel { background: var(--primary-muted); }
+    .project-item .radio-dot { flex-shrink: 0; }
+    .project-item.sel .radio-dot { border-color: var(--primary); background: var(--primary); }
+    .project-item.sel .radio-dot::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--surface); }
+    .project-item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .project-item-name { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--text); }
+    .project-item-id { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--text-mute); }
+    .project-empty { padding: var(--space-6); text-align: center; color: var(--text-mute); font-size: var(--font-size-caption); }
+    .project-modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); padding: var(--space-4) var(--space-5); border-top: 1px solid var(--border); }
+    .batch-input.num { text-align: center; }
+    .seq-ok { color: var(--status-success); font-weight: 500; }
+    .seq-warn { color: var(--status-warning); font-weight: 500; }
+    .version-bar { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border-faint); background: var(--surface); }
+    .vtab { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-full); font-size: var(--font-size-caption); color: var(--text-sub); cursor: pointer; background: var(--surface); transition: all var(--duration-fast) var(--ease-standard); }
+    .vtab:hover { border-color: var(--border-strong); }
+    .vtab.active { border-color: var(--primary); background: var(--primary-muted); color: var(--primary); }
+    .vtab-name { font-weight: 500; }
+    .vtab-count { font-family: var(--font-mono); font-size: var(--font-size-eyebrow); opacity: .8; }
+    .vtab-close { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: var(--radius-full); color: var(--text-mute); line-height: 1; }
+    .vtab-close:hover { background: var(--primary-muted); color: var(--primary); }
+    .vtab-close i[data-icon] { width: 11px; height: 11px; }
+    .vadd { flex-shrink: 0; }
+    .ti-spec { font-size: var(--font-size-eyebrow); color: var(--text-mute); font-family: var(--font-mono); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* 下拉多选器 */
+    .multi-select { position: relative; width: 100%; }
+    .ms-trigger { min-height: var(--size-control-md); padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; background: var(--surface); }
+    .ms-trigger:hover { border-color: var(--border-strong); }
+    .ms-trigger .chip { margin: 0; font-size: var(--font-size-caption); }
+    .ms-placeholder { color: var(--text-mute); font-size: var(--font-size-body); }
+    .ms-panel { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-3); z-index: 60; max-height: 240px; overflow-y: auto; padding: var(--space-2); display: flex; flex-direction: column; gap: 2px; }
+    .ms-option { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--font-size-body); }
+    .ms-option:hover { background: var(--surface-2); }
+    .ms-option.sel { background: var(--primary-muted); color: var(--primary); font-weight: var(--font-weight-medium); }
+    .ms-option input { width: 14px; height: 14px; accent-color: var(--primary); cursor: pointer; }
+    .ms-search { padding-bottom: var(--space-2); margin-bottom: var(--space-2); border-bottom: 1px solid var(--border-faint); }
+    .ms-list { display: flex; flex-direction: column; gap: 2px; }
+    .ms-empty { padding: var(--space-4); text-align: center; color: var(--text-mute); font-size: var(--font-size-caption); }
+    /* 关联短剧：下拉选项与已选值中的双行展示（剧名 + 短剧ID/项目ID） */
+    .ms-opt-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .ms-opt-title { font-size: var(--font-size-body); font-weight: var(--font-weight-medium); color: var(--text); line-height: 1.4; }
+    .ms-option.sel .ms-opt-title { color: var(--primary); }
+    .ms-opt-sub { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--text-mute); display: flex; gap: var(--space-3); flex-wrap: wrap; }
+    .ms-sel-sub { font-family: var(--font-mono); font-size: var(--font-size-caption); color: var(--text-mute); }
+    .ms-clear { cursor: pointer; color: var(--text-mute); flex-shrink: 0; width: 14px; height: 14px; }
+    .ms-clear:hover { color: var(--status-error); }
+    .radio-group.disabled { opacity: .55; pointer-events: none; }
+    /* 数值区间输入 */
+    .range-field { display: flex; align-items: center; gap: var(--space-2); }
+    .range-field .input { flex: 1; }
+    .range-sep { color: var(--text-mute); flex-shrink: 0; }
+    .range-unit { color: var(--text-sub); font-size: var(--font-size-caption); flex-shrink: 0; }
+    @media (max-width: 900px) { .wizard-layout { grid-template-columns: 1fr; } .help-card { position: static; } .actor-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-page="create">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧剧库 / <b id="crumb-title">新建短剧</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title" id="page-title">新建短剧</h1>
+          <p class="page-desc">按统一字段模型一次录入，覆盖 7 个平台的剧级与剧集级字段，分发时仅需补填平台特有项。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-md" onclick="toast('已导入短剧信息')"><i data-icon="upload"></i>导入短剧信息</button>
+          <button class="btn btn-secondary btn-md" onclick="resetForm()"><i data-icon="refresh-cw"></i>重置表单</button>
+        </div>
+      </div>
+
+      <div class="wizard-layout">
+        <div>
+          <div class="steps reveal" id="steps">
+            <span class="step active" data-step="0" onclick="goStep(0)"><span class="step-no">1</span>基础信息</span>
+            <span class="step-arrow">›</span>
+            <span class="step" data-step="1" onclick="goStep(1)"><span class="step-no">2</span>制作信息</span>
+            <span class="step-arrow">›</span>
+            <span class="step" data-step="2" onclick="goStep(2)"><span class="step-no">3</span>其他信息</span>
+            <span class="step-arrow">›</span>
+            <span class="step" data-step="3" onclick="goStep(3)"><span class="step-no">4</span>关联剧集</span>
+            <span class="step-arrow">›</span>
+            <span class="step" data-step="4" onclick="goStep(4)"><span class="step-no">5</span>预览确认</span>
+          </div>
+
+          <div class="panel reveal">
+            <!-- Step 1 基础信息 -->
+            <div class="step-pane active" data-pane="0">
+              <div class="panel-head"><div class="panel-title"><i data-icon="info"></i>基础信息</div><span class="tag tag-primary">覆盖 7 平台</span></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="form-field full" id="f-project-field">
+                    <label class="form-label">项目名称 / ID</label>
+                    <div class="input" id="f-project-trigger">
+                      <input class="input-control" id="f-project" type="text" placeholder="来自中台系统的立项信息" readonly>
+                    </div>
+                    <div class="form-hint">来自中台系统，不可修改</div>
+                  </div>
+                  <div class="form-field full" id="f-related-drama-field" style="display:none;">
+                    <label class="form-label">关联短剧<span class="req">*</span></label>
+                    <div class="multi-select" id="f-related-drama"></div>
+                    <div class="form-hint">可搜索的下拉单选，展示短剧名称、短剧ID、项目ID；手动创建时展示，必填</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">短剧名称<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" id="f-title" type="text" placeholder="请输入短剧名称（各平台长度上限不同，取最小 2-20 字）" oninput="checkDuplicateTitle()"></div>
+                    <div class="form-hint">各平台必填 · 长度取交集最小值（支付宝 2-20 字 / 百家号 2-30 字）</div>
+                    <div class="title-dup" id="f-title-dup" style="display:none;"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">内容分类<span class="req">*</span></label>
+                    <select class="input" id="f-type-l1" onchange="updateTypeL2()"></select>
+                    <div class="form-hint">一级分类（真人 / 动漫 / AI仿真漫剧）</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">内容子分类<span class="req">*</span></label>
+                    <select class="input" id="f-type-l2"></select>
+                    <div class="form-hint">二级分类，随一级分类联动</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">受众定位<span class="req">*</span></label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="f-audience" value="男频" checked><span class="radio-dot"></span>男频</label>
+                      <label class="radio-option"><input type="radio" name="f-audience" value="女频"><span class="radio-dot"></span>女频</label>
+                    </div>
+                    <div class="form-hint">映射：荣耀 audience（1男/2女）/ vivo sexChannel / 百家号一级分类</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">是否男女频通用<span class="req">*</span></label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="f-unisex" value="通用" checked><span class="radio-dot"></span>通用</label>
+                      <label class="radio-option"><input type="radio" name="f-unisex" value="不通用"><span class="radio-dot"></span>不通用</label>
+                    </div>
+                    <div class="form-hint">通用：荣耀 audience=3；支付宝 audience 可多选男女频</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">标签<span class="req">*</span><span class="form-tag-count" id="f-tags-count">已选 0</span></label>
+                    <div class="tag-pick" id="f-tags"></div>
+                    <div class="form-hint">可多选（支付宝枚举，必选 ≥1）；分发到 OPPO / vivo / 支付宝 / 银河时自动带入</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">总集数<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" id="f-total" type="number" placeholder="如 80" oninput="syncChargeLimit()"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">更新状态<span class="req">*</span></label>
+                    <select class="input" id="f-update"><option>已完结</option><option>更新中</option></select>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">是否 AI 生成<span class="req">*</span></label>
+                    <select class="input" id="f-ai"><option>否</option><option>是</option></select>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">首次发布时间<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" id="f-first-release" type="date"></div>
+                    <div class="form-hint">短剧首次上线的日期，分发时作为首发时间复用</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">评级<span class="req">*</span></label>
+                    <select class="input" id="f-rating"><option>S</option><option>A</option><option>B</option></select>
+                    <div class="form-hint">荣耀 CP 评级 / vivo 内容评级复用</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">付费卡点集数<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" id="f-charge-episode" type="number" min="0" placeholder="如 10"></div>
+                    <div class="form-hint">从本集开始收费，必填 · 分发至各平台付费类字段时自动带入</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">收费剧集上限<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" id="f-charge-limit" type="number" min="0" placeholder="默认等于总集数" oninput="chargeLimitTouched=true"></div>
+                    <div class="form-hint">收费剧集的最大集数上限，默认等于总集数，可手动修改</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">精彩点位</label>
+                    <div class="input"><input class="input-control" id="f-highlights" type="text" placeholder="如 3:15（第 3 集 15 秒），多个用逗号分隔"></div>
+                    <div class="form-hint">选填 · 格式「集数:某秒」，如 3:15</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">短剧简介<span class="req">*</span></label>
+                    <div class="input"><textarea class="input-control" id="f-synopsis" rows="3" placeholder="请输入短剧简介（支付宝要求 ≥200 字，按平台最长补全）"></textarea></div>
+                    <div class="form-hint">各平台必填 · 支付宝 summary ≥200 字 / 荣耀 1-2000 字</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">一句话推荐/看点<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" id="f-recommend" maxlength="128" placeholder="请输入一句话推荐/看点（≤128 字符）"></div>
+                    <div class="form-hint">各平台推广文案 · 荣耀/OPPO 一句话推荐复用</div>
+                  </div>
+                </div>
+                <div class="section-title">封面图<span class="badge">竖版必填 · 横/方按平台补齐</span></div>
+                <div class="form-grid cols-3">
+                  <div class="form-field">
+                    <label class="form-label">竖版封面 3:4<span class="req">*</span></label>
+                    <div class="upload-box square" onclick="toast('上传竖版封面 3:4')"><i data-icon="image"></i><span class="up-text">上传竖版封面</span></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">横版封面 16:9<span class="req">*</span></label>
+                    <div class="upload-box wide" style="aspect-ratio:16/9" onclick="toast('上传横版封面 16:9')"><i data-icon="image"></i><span class="up-text">上传横版封面</span></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">方形封面 1:1<span class="req">*</span></label>
+                    <div class="upload-box" style="aspect-ratio:1/1" onclick="toast('上传方形封面 1:1')"><i data-icon="image"></i><span class="up-text">上传方形封面</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2 制作信息 -->
+            <div class="step-pane" data-pane="1">
+              <div class="panel-head"><div class="panel-title"><i data-icon="users"></i>制作信息</div><span class="tag tag-primary">主创团队 / 成本 / 版权</span></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="form-field full">
+                    <label class="form-label">演员列表<span class="req">*</span></label>
+                    <div id="actor-list" class="actor-list"></div>
+                    <button type="button" class="btn btn-ghost btn-sm" style="align-self:flex-start;" onclick="addActor()"><i data-icon="square-plus"></i>添加演员</button>
+                    <div class="form-hint">依据支付宝 ShortPlayActor 规则：姓名、饰演角色必填；演员照片、简介选填（姓名≤30字 / 角色≤30字 / 简介≤100字）</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">导演<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="text" placeholder="多个用回车生成标签"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">制片人<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="text" placeholder="多个用回车生成标签"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">编剧<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="text" placeholder="多个用回车生成标签"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">制作机构<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="text" placeholder="请输入公司全称"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">版权方<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="text" placeholder="请输入公司全称"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">发行方 / 牌照方<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="text" placeholder="请输入公司全称"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">制作成本（万元）<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="number" placeholder="如 120"></div>
+                    <div class="form-hint">与支付宝短剧分类（一/二/三类）联动</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">投资额（万元）<span class="req">*</span></label>
+                    <div class="input"><input class="input-control" type="number" placeholder="如 27.9"></div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">横 / 竖版<span class="req">*</span></label>
+                    <select class="input"><option>竖视频</option><option>横视频</option></select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3 其他信息 -->
+            <div class="step-pane" data-pane="2">
+              <div class="panel-head"><div class="panel-title"><i data-icon="settings"></i>其他信息</div><span class="tag tag-primary">团队 / 定价 / 上线 / 备注</span></div>
+              <div class="panel-body">
+                <div class="form-grid">
+                  <div class="form-field">
+                    <label class="form-label">剧本团队<span class="req">*</span></label>
+                    <div class="multi-select" id="f-script-teams"></div>
+                    <div class="form-hint">下拉多选，必选 ≥1</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">制作团队<span class="req">*</span></label>
+                    <div class="multi-select" id="f-prod-teams"></div>
+                    <div class="form-hint">下拉多选，必选 ≥1</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">合作剧类型<span class="req">*</span></label>
+                    <div class="multi-select" id="f-coop-types"></div>
+                    <div class="form-hint">下拉多选，必选 ≥1</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">作品标签<span class="req">*</span><span class="form-tag-count" id="f-worktags-count">已选 0</span></label>
+                    <div class="tag-pick" id="f-worktags"></div>
+                    <div class="form-hint">下拉多选，必选 ≥1（文旅合作剧 / MCN / 真人 / 漫剧 / AI真人 / 小说解说 / 批量剧 / 效率剧 / 批量剧-小说解说 / 批量剧-效率剧）</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">短剧角标</label>
+                    <div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;">
+                      <div class="radio-group" id="f-badge-group">
+                        <label class="radio-option"><input type="radio" name="f-badge" value="新剧" onchange="onBadgeChange()"><span class="radio-dot"></span>新剧</label>
+                        <label class="radio-option"><input type="radio" name="f-badge" value="热播" onchange="onBadgeChange()"><span class="radio-dot"></span>热播</label>
+                        <label class="radio-option"><input type="radio" name="f-badge" value="独播" onchange="onBadgeChange()"><span class="radio-dot"></span>独播</label>
+                        <label class="radio-option"><input type="radio" name="f-badge" value="男频" onchange="onBadgeChange()"><span class="radio-dot"></span>男频</label>
+                        <label class="radio-option"><input type="radio" name="f-badge" value="女频" onchange="onBadgeChange()"><span class="radio-dot"></span>女频</label>
+                      </div>
+                      <a class="link-action" id="f-badge-clear" style="display:none;" onclick="clearBadge()">清除</a>
+                    </div>
+                    <div class="form-hint">单选，非必填（新剧 / 热播 / 独播 / 男频 / 女频）</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">每集区间定价<span class="req">*</span></label>
+                    <div class="range-field">
+                      <div class="input"><input class="input-control" id="f-price-min" type="number" min="0" value="50" placeholder="最低价"></div>
+                      <span class="range-sep">～</span>
+                      <div class="input"><input class="input-control" id="f-price-max" type="number" min="0" value="990" placeholder="最高价"></div>
+                    </div>
+                    <div class="form-hint">最低价～最高价，必填（默认 50～990）</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">首发平台</label>
+                    <div class="multi-select" id="f-debut-platforms"></div>
+                    <div class="form-hint">下拉多选，非必填；枚举值与「上线平台」相同</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">上线平台<span class="req">*</span></label>
+                    <div class="multi-select" id="f-launch-platforms"></div>
+                    <div class="form-hint">下拉多选，必选 ≥1；端原生 / 小程序两类用于联动「端原生上架」</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">端原生上架<span class="req">*</span></label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="f-native" value="否" checked><span class="radio-dot"></span>否</label>
+                      <label class="radio-option"><input type="radio" name="f-native" value="是"><span class="radio-dot"></span>是</label>
+                      <label class="radio-option"><input type="radio" name="f-native" value="仅端原生"><span class="radio-dot"></span>仅端原生</label>
+                    </div>
+                    <div class="form-hint" id="f-native-hint">根据所选「上线平台名称」自动判断：仅端原生平台 → 仅端原生；端原生 + 小程序 → 是；仅小程序 → 否</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">小程序上下架状态<span class="req">*</span></label>
+                    <div class="radio-group" id="f-mini-status-group">
+                      <label class="radio-option"><input type="radio" name="f-mini-status" value="上架"><span class="radio-dot"></span>上架</label>
+                      <label class="radio-option"><input type="radio" name="f-mini-status" value="下架" checked><span class="radio-dot"></span>下架</label>
+                      <label class="radio-option"><input type="radio" name="f-mini-status" value="隐藏"><span class="radio-dot"></span>隐藏</label>
+                    </div>
+                    <div class="form-hint">单选，必填，默认选中「下架」</div>
+                  </div>
+                  <div class="form-field full">
+                    <label class="form-label">点赞初始值<span class="req">*</span></label>
+                    <div class="range-field">
+                      <div class="input"><input class="input-control" id="f-like-min" type="number" min="0" value="35" placeholder="最低"></div>
+                      <span class="range-sep">～</span>
+                      <div class="input"><input class="input-control" id="f-like-max" type="number" min="0" value="40" placeholder="最高"></div>
+                      <span class="range-unit">万</span>
+                    </div>
+                    <div class="form-hint">最低～最高（单位：万），必填（默认 35 万～40 万）</div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">备注<span class="req">*</span></label>
+                    <select class="input" id="f-remark">
+                      <option>新剧</option>
+                      <option>重剪未重拍</option>
+                      <option>老剧换新名（未重剪未重拍）</option>
+                      <option>老剧换配音</option>
+                      <option>外部新剧</option>
+                      <option>外部老剧</option>
+                      <option>巨量跑微小</option>
+                    </select>
+                    <div class="form-hint">默认选中「新剧」</div>
+                  </div>
+                  <div class="form-field" id="f-first-launch-field">
+                    <label class="form-label">是否首次上线<span class="req">*</span></label>
+                    <div class="radio-group" id="f-first-launch-group">
+                      <label class="radio-option"><input type="radio" name="f-first-launch" value="否" checked onchange="updateFirstLaunchDependents()"><span class="radio-dot"></span>否</label>
+                      <label class="radio-option"><input type="radio" name="f-first-launch" value="是" onchange="updateFirstLaunchDependents()"><span class="radio-dot"></span>是</label>
+                    </div>
+                    <div class="form-hint">由数据来源决定：中台系统=「是」，手动创建=「否」，均不可修改</div>
+                  </div>
+                  <div class="form-field full" id="f-app-record-field" style="display:none;">
+                    <label class="form-label">APP备案号</label>
+                    <div class="input"><input class="input-control" id="f-app-record" type="text" placeholder="请输入 APP 备案号（选填）"></div>
+                    <div class="form-hint">非必填</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4 关联剧集 -->
+            <div class="step-pane" data-pane="3">
+              <div class="panel-head"><div class="panel-title"><i data-icon="link"></i>关联剧集</div><span class="tag tag-primary">穿梭框 · 从系统剧集池选择</span></div>
+              <div class="panel-body">
+                <div class="alert alert-info"><i data-icon="info"></i><span>剧集统一在「新增剧集」页面录入系统，此处把系统里已存在的剧集关联到本短剧。左侧展示系统剧集池，右侧为本短剧关联的剧集；可点击选中（支持多选）后移动，或双击直接移动。</span></div>
+                <div class="toolbar" style="margin-bottom: var(--space-3);">
+                  <a class="btn btn-ghost btn-md" href="episodes-add.html" target="_blank" rel="noopener"><i data-icon="cloud-upload"></i>打开「新增剧集」（新标签）</a>
+                  <span class="spacer"></span>
+                  <span class="form-hint">已关联 <span id="ep-sel-count" style="color:var(--primary);font-weight:500;">0</span> 集</span>
+                </div>
+
+                <div class="transfer">
+                  <!-- 左：系统剧集池 -->
+                  <div class="transfer-pane">
+                    <div class="transfer-head">
+                      <div class="transfer-head-left">
+                        <span class="transfer-title">系统剧集池</span>
+                        <label class="transfer-all"><input type="checkbox" id="ep-left-checkall" onchange="toggleEpSelectAll()">全选</label>
+                      </div>
+                      <span class="tag tag-neutral" id="ep-left-total">0 集</span>
+                    </div>
+                    <div class="transfer-search">
+                      <div class="input"><i data-icon="search"></i><input class="input-control" id="ep-kw" type="text" placeholder="按文件名筛选" oninput="renderTransfer()"></div>
+                      <select class="input" id="ep-has-drama" onchange="renderTransfer()">
+                        <option value="">归属：全部</option>
+                        <option value="none">未关联</option>
+                        <option value="assigned">已有归属短剧</option>
+                      </select>
+                      <select class="input" id="ep-definition" onchange="renderTransfer()">
+                        <option value="">分辨率：全部</option>
+                      </select>
+                    </div>
+                    <div class="transfer-list" id="ep-left-list"></div>
+                  </div>
+
+                  <!-- 中间操作 -->
+                  <div class="transfer-mid">
+                    <button class="btn btn-secondary transfer-btn" onclick="epMoveRight()" title="添加到关联"><i data-icon="chevron-right"></i></button>
+                    <button class="btn btn-secondary transfer-btn" onclick="epMoveLeft()" title="移出关联"><i data-icon="chevron-left"></i></button>
+                  </div>
+
+                  <!-- 右：本短剧关联剧集 -->
+                  <div class="transfer-pane">
+                    <div class="transfer-head">
+                      <span class="transfer-title">本短剧关联剧集</span>
+                      <div style="display:flex; align-items:center; gap:var(--space-2);">
+                        <span class="form-hint" id="ep-right-avg">平均时长 —</span>
+                        <span class="tag tag-primary" id="ep-right-total">0 集</span>
+                      </div>
+                    </div>
+                    <div class="version-bar" id="version-bar"></div>
+                    <div class="transfer-search">
+                      <div class="input"><input class="input-control" id="ep-batch-prefix" placeholder="名称前缀（默认本短剧名）"></div>
+                      <button class="btn btn-ghost btn-sm" onclick="epBatchName()" title="批量命名右侧全部剧集，以「-第n集」结尾"><i data-icon="sparkles"></i>批量命名</button>
+                      <div class="input"><input class="input-control" id="ep-batch-desc" placeholder="批量设置剧集描述"></div>
+                      <button class="btn btn-ghost btn-sm" onclick="epBatchDesc()" title="将描述的文本应用到右侧全部剧集"><i data-icon="file-text"></i>批量描述</button>
+                    </div>
+                    <div class="transfer-list" id="ep-right-list"></div>
+                  </div>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: var(--space-4);"><i data-icon="info"></i><span>提交后，右侧剧集将关联到本短剧；左侧未移动的剧集保持原归属。右侧可多选后批量移出。</span></div>
+              </div>
+            </div>
+
+            <!-- Step 5 预览确认 -->
+            <div class="step-pane" data-pane="4">
+              <div class="panel-head"><div class="panel-title"><i data-icon="badge-check"></i>预览确认</div><span class="tag tag-success">字段完备</span></div>
+              <div class="panel-body">
+                <div class="alert alert-success"><i data-icon="circle-check"></i><span>统一字段已录入，可覆盖 7 个平台分发所需的剧级与剧集级字段。提交后进入「剧集管理」，并可发起「一键分发」。</span></div>
+                <div class="form-grid" id="preview"></div>
+              </div>
+            </div>
+
+            <div class="panel" style="border-top-left-radius:0; border-top-right-radius:0; border-top:1px solid var(--border-faint);">
+              <div class="panel-body" style="display:flex; justify-content:space-between; align-items:center; padding: var(--space-4) var(--space-5);">
+                <button class="btn btn-secondary btn-md" id="btn-prev" onclick="prevStep()"><i data-icon="chevron-left"></i>上一步</button>
+                <span class="mono-badge" id="step-pos">1 / 4</span>
+                <button class="btn btn-primary btn-md" id="btn-next" onclick="nextStep()">下一步<i data-icon="chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="help-card reveal">
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><i data-icon="info"></i>操作说明</div></div>
+            <div class="panel-body" style="display:flex; flex-direction:column; gap:var(--space-3);">
+              <div class="help-step"><span class="n">1</span><p>首次创建即按「统一字段模型」一次录入，取代原先逐平台填写。</p></div>
+              <div class="help-step"><span class="n">2</span><p>剧集复用媒资库文件，避免同一视频多次上传。</p></div>
+              <div class="help-step"><span class="n">3</span><p>备案与版权材料在各平台分发时补充，不再于创建阶段统一录入。</p></div>
+              <div class="help-step" style="background:var(--primary-muted); border-color:var(--primary-soft);"><span class="n" style="background:var(--primary)">4</span><p style="font-weight:500;">分发时仅补填平台特有字段，一键完成字段映射。</p></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><div class="panel-title"><i data-icon="globe"></i>字段覆盖</div></div>
+            <div class="panel-body" style="display:flex; flex-wrap:wrap; gap:var(--space-2);">
+              <span class="platform-badge">OPPO</span><span class="platform-badge">vivo</span><span class="platform-badge">荣耀</span><span class="platform-badge">银河</span><span class="platform-badge">搜狐</span><span class="platform-badge">百家号</span><span class="platform-badge">支付宝</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script>
+    var current = 0;
+    var currentDramaId = null;
+    var dramaSource = 'manual';   // 数据来源：mid=中台系统 / manual=手动新增
+    var STEP_TITLES = ['基础信息', '制作信息', '其他信息', '关联剧集', '预览确认'];
+
+    function renderSteps() {
+      document.querySelectorAll('.step').forEach(function (el, i) {
+        el.classList.remove('active', 'done');
+        if (i === current) el.classList.add('active');
+        else if (i < current) el.classList.add('done');
+      });
+      document.querySelectorAll('.step-pane').forEach(function (el) {
+        el.classList.toggle('active', Number(el.getAttribute('data-pane')) === current);
+      });
+      document.getElementById('step-pos').textContent = (current + 1) + ' / 5';
+      document.getElementById('btn-prev').style.visibility = current === 0 ? 'hidden' : 'visible';
+      var btnNext = document.getElementById('btn-next');
+      if (current === 4) { btnNext.textContent = '提交并创建'; btnNext.onclick = submitDrama; }
+      else { btnNext.innerHTML = '下一步<i data-icon="chevron-right"></i>'; btnNext.onclick = nextStep; injectIcons(); }
+      if (current === 4) renderPreview();
+    }
+
+    function nextStep() { if (current < 4) { current++; renderSteps(); } }
+    function prevStep() { if (current > 0) { current--; renderSteps(); } }
+    function goStep(i) { current = i; renderSteps(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+    function fmtDur(s) {
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    /* ---- 演员列表（依据支付宝 ShortPlayActor 规则：姓名/角色必填，照片/简介选填） ---- */
+    var actors = [];
+    var actorKey = 0;
+
+    function addActor(name, role, profile) {
+      actors.push({ key: actorKey++, name: name || '', role: role || '', profile: profile || '' });
+      renderActors();
+    }
+    function removeActor(key) {
+      actors = actors.filter(function (a) { return a.key !== key; });
+      renderActors();
+    }
+    function actorPhoto(key) { toast('上传演员照片（photo_material_id，选填）'); }
+    function updateActor(key, field, val) {
+      var a = actors.find(function (x) { return x.key === key; });
+      if (a) a[field] = val;
+    }
+
+    function renderActors() {
+      var box = document.getElementById('actor-list');
+      if (!actors.length) {
+        box.innerHTML = '<div class="empty-state" style="padding:var(--space-3);"><i data-icon="users"></i><span class="empty-title">尚未添加演员</span></div>';
+        injectIcons();
+        return;
+      }
+      box.innerHTML = actors.map(function (a) {
+        return '<div class="actor-row" data-key="' + a.key + '">' +
+          '<input class="ai" value="' + a.name + '" placeholder="演员姓名（必填）" oninput="updateActor(' + a.key + ',\'name\',this.value)">' +
+          '<input class="ai" value="' + a.role + '" placeholder="饰演角色（必填）" oninput="updateActor(' + a.key + ',\'role\',this.value)">' +
+          '<input class="ai" value="' + a.profile + '" placeholder="演员简介（选填，≤100字）" oninput="updateActor(' + a.key + ',\'profile\',this.value)">' +
+          '<div class="actor-photo" onclick="actorPhoto(' + a.key + ')"><i data-icon="image"></i>照片</div>' +
+          '<a class="link-action danger" onclick="removeActor(' + a.key + ')">删除</a>' +
+          '</div>';
+      }).join('');
+      injectIcons();
+    }
+
+    /* ---- 关联剧集（穿梭框：左=系统剧集池，右=当前版本关联剧集）
+       支持多「版本」：每个版本独立维护一组关联剧集，用于同一短剧的不同清晰度/尺寸版本 ---- */
+    var versionList = [];        // [{ id, name }]
+    var activeVersionId = null;
+    var versionData = {};        // versionId -> { episodeIds:[], titles:{}, descs:{}, seqs:{} }
+    var versionSeq = 0;
+    var epSeeded = false;
+    var leftSel = {};
+    var rightSel = {};
+
+    function newVersionId() { return 'v' + (++versionSeq); }
+    function vmeta(vid) {
+      if (!versionData[vid]) versionData[vid] = { episodeIds: [], titles: {}, descs: {}, seqs: {} };
+      return versionData[vid];
+    }
+    function activeMeta() { return vmeta(activeVersionId); }
+    /* 所有版本的剧集 ID 去重并集（页面级「已关联」计数用） */
+    function allEpisodeIds() {
+      var seen = {};
+      var out = [];
+      versionList.forEach(function (v) {
+        vmeta(v.id).episodeIds.forEach(function (id) {
+          if (!seen[id]) { seen[id] = true; out.push(id); }
+        });
+      });
+      return out;
+    }
+    function ensureActiveVersion() {
+      if (versionList.some(function (v) { return v.id === activeVersionId; })) return;
+      activeVersionId = versionList.length ? versionList[0].id : null;
+    }
+    function setActiveVersion(vid) {
+      activeVersionId = vid; rightSel = {}; renderTransfer();
+    }
+    function addVersion() {
+      var idx = versionList.length + 1;
+      var vid = newVersionId();
+      versionList.push({ id: vid, name: '版本 ' + idx });
+      setActiveVersion(vid);
+      toast('已新增「版本 ' + idx + '」，可关联不同剧集');
+    }
+    function removeVersion(vid) {
+      if (versionList.length <= 1) { toast('至少保留一个版本'); return; }
+      versionList = versionList.filter(function (v) { return v.id !== vid; });
+      delete versionData[vid];
+      ensureActiveVersion();
+      renderTransfer();
+      toast('版本已删除');
+    }
+    /* 初始化默认版本并渲染版本切换条 */
+    function renderVersionBar() {
+      var bar = document.getElementById('version-bar');
+      var tabs = versionList.map(function (v) {
+        var m = vmeta(v.id);
+        var active = v.id === activeVersionId;
+        var close = versionList.length > 1
+          ? '<span class="vtab-close" onclick="event.stopPropagation();removeVersion(\'' + v.id + '\')"><i data-icon="x"></i></span>'
+          : '';
+        return '<div class="vtab' + (active ? ' active' : '') + '" onclick="setActiveVersion(\'' + v.id + '\')">' +
+          '<span class="vtab-name">' + escAttr(v.name) + '</span>' +
+          '<span class="vtab-count">' + m.episodeIds.length + ' 集</span>' + close + '</div>';
+      }).join('');
+      bar.innerHTML = tabs +
+        '<button type="button" class="btn btn-ghost btn-sm vadd" onclick="addVersion()"><i data-icon="square-plus"></i>新增版本</button>';
+      injectIcons(bar);
+    }
+
+    function escAttr(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); });
+    }
+
+    /* ---- 下拉多选器（剧本团队 / 制作团队 / 合作剧类型 / 上线平台） ---- */
+    function makeMultiSelect(containerId, options, selected, onChange, placeholder) {
+      var root = document.getElementById(containerId);
+      var open = false;
+      var lastScroll = 0;
+      function render() {
+        var chipsHtml = selected.length
+          ? selected.map(function (v) { return '<span class="chip selectable sel">' + escHtml(v) + '</span>'; }).join('')
+          : '<span class="ms-placeholder">' + escHtml(placeholder || '请选择') + '</span>';
+        root.innerHTML = '<div class="ms-trigger"><div style="display:flex;flex-wrap:wrap;gap:4px;flex:1;align-items:center;">' + chipsHtml + '</div><i data-icon="chevron-down"></i></div>';
+        if (open) {
+          var panel = document.createElement('div');
+          panel.className = 'ms-panel';
+          panel.innerHTML = options.map(function (o) {
+            return '<label class="ms-option"><input type="checkbox"' + (selected.indexOf(o) > -1 ? ' checked' : '') + ' data-val="' + escAttr(o) + '">' + escHtml(o) + '</label>';
+          }).join('');
+          root.appendChild(panel);
+          panel.querySelectorAll('input').forEach(function (cb) {
+            cb.addEventListener('change', function () {
+              var v = cb.getAttribute('data-val');
+              var i = selected.indexOf(v);
+              if (cb.checked && i < 0) selected.push(v);
+              else if (!cb.checked && i > -1) selected.splice(i, 1);
+              lastScroll = panel.scrollTop;
+              if (onChange) onChange(selected);
+              render();
+            });
+          });
+          panel.scrollTop = lastScroll;
+        }
+        injectIcons(root);
+      }
+      root.addEventListener('click', function (e) {
+        var panel = open ? root.querySelector('.ms-panel') : null;
+        if (panel && panel.contains(e.target)) return;               // 选项点击交给 checkbox 处理，不收起
+        if (e.target.closest && e.target.closest('.chip')) return;   // 点击已选标签不收起
+        open = !open;
+        render();
+      });
+      document.addEventListener('mousedown', function (e) {
+        if (open && !root.contains(e.target)) { open = false; lastScroll = 0; render(); }
+      });
+      render();
+      return { render: render };
+    }
+
+    var selectedScriptTeams = [];
+    var selectedProdTeams = [];
+    var selectedCoopTypes = [];
+    var selectedDebutPlatforms = [];
+    var selectedLaunchPlatforms = [];
+    var msScriptTeams = null, msProdTeams = null, msCoopTypes = null, msDebutPlatforms = null, msLaunchPlatforms = null;
+
+    function initMultiSelects() {
+      msScriptTeams = makeMultiSelect('f-script-teams', SCRIPT_TEAMS, selectedScriptTeams, null, '请选择剧本团队');
+      msProdTeams = makeMultiSelect('f-prod-teams', PRODUCTION_TEAMS, selectedProdTeams, null, '请选择制作团队');
+      msCoopTypes = makeMultiSelect('f-coop-types', COOP_TYPES, selectedCoopTypes, null, '请选择合作剧类型');
+      msDebutPlatforms = makeMultiSelect('f-debut-platforms', LAUNCH_PLATFORMS, selectedDebutPlatforms, null, '请选择首发平台');
+      msLaunchPlatforms = makeMultiSelect('f-launch-platforms', LAUNCH_PLATFORMS, selectedLaunchPlatforms, updateNativeLaunch, '请选择上线平台');
+      msRelatedDrama = makeSearchSelect('f-related-drama', relatedDramaOptions, null, '搜索并选择关联短剧');
+    }
+
+    /* ---- 可搜索下拉单选器（关联短剧，枚举为短剧列表内的剧名） ---- */
+    function makeSearchSelect(containerId, getOptions, onChange, placeholder) {
+      var root = document.getElementById(containerId);
+      var selected = null;
+      var open = false;
+      function renderTrigger() {
+        var selHtml = selected
+          ? '<span class="chip selectable sel">' + escHtml(selected.label) + '</span>' +
+            '<span class="ms-sel-sub">短剧ID ' + escHtml(selected.value) + ' · 项目ID ' + escHtml(selected.project || '—') + '</span>'
+          : '<span class="ms-placeholder">' + escHtml(placeholder || '请选择') + '</span>';
+        root.innerHTML = '<div class="ms-trigger"><div style="display:flex;flex-wrap:wrap;gap:4px;flex:1;align-items:center;">' +
+          selHtml +
+          '</div>' + (selected ? '<i data-icon="x" class="ms-clear"></i>' : '') + '<i data-icon="chevron-down"></i></div>';
+        injectIcons(root);
+      }
+      var self = {
+        render: function () { renderTrigger(); },
+        get: function () { return selected; },
+        set: function (sel) { selected = sel; open = false; renderTrigger(); }
+      };
+      function openPanel() {
+        var panel = document.createElement('div');
+        panel.className = 'ms-panel';
+        panel.innerHTML = '<div class="ms-search"><div class="input"><i data-icon="search"></i><input class="input-control" type="text" placeholder="搜索短剧剧名"></div></div><div class="ms-list"></div>';
+        root.appendChild(panel);
+        var listBox = panel.querySelector('.ms-list');
+        var searchInput = panel.querySelector('input');
+        function renderList(kw) {
+          kw = (kw || '').trim();
+          var filtered = getOptions().filter(function (o) { return !kw || o.label.indexOf(kw) > -1 || (o.value && o.value.indexOf(kw) > -1); });
+          listBox.innerHTML = filtered.length
+            ? filtered.map(function (o) {
+                return '<div class="ms-option' + (selected && selected.value === o.value ? ' sel' : '') + '" data-val="' + escAttr(o.value) + '" data-label="' + escAttr(o.label) + '" data-project="' + escAttr(o.project || '') + '">' +
+                  '<div class="ms-opt-main">' +
+                    '<div class="ms-opt-title">' + escHtml(o.label) + '</div>' +
+                    '<div class="ms-opt-sub"><span>短剧ID ' + escHtml(o.value) + '</span><span>项目ID ' + escHtml(o.project || '—') + '</span></div>' +
+                  '</div>' +
+                '</div>';
+              }).join('')
+            : '<div class="ms-empty">无匹配短剧</div>';
+        }
+        renderList('');
+        searchInput.addEventListener('input', function () { renderList(this.value); });
+        searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+        listBox.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var el = e.target.closest ? e.target.closest('.ms-option') : null;
+          if (!el) return;
+          selected = { value: el.getAttribute('data-val'), label: el.getAttribute('data-label'), project: el.getAttribute('data-project') };
+          open = false;
+          renderTrigger();
+          if (onChange) onChange(selected);
+        });
+        setTimeout(function () { searchInput.focus(); }, 0);
+      }
+      root.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('.ms-clear')) {
+          selected = null; if (onChange) onChange(null); renderTrigger(); return;
+        }
+        if (open) { open = false; renderTrigger(); return; }
+        open = true; openPanel();
+      });
+      document.addEventListener('mousedown', function (e) {
+        if (open && !root.contains(e.target)) { open = false; renderTrigger(); }
+      });
+      renderTrigger();
+      return self;
+    }
+
+    var msRelatedDrama = null;
+    function relatedDramaOptions() {
+      var list = (typeof DB !== 'undefined' && DB.dramas) ? DB.dramas : [];
+      return list.filter(function (d) { return !currentDramaId || d.id !== currentDramaId; })
+        .map(function (d) { return { value: d.id, label: d.title, project: d.project || '—' }; });
+    }
+
+    function getFirstLaunch() {
+      var el = document.querySelector('input[name="f-first-launch"]:checked');
+      return el ? el.value : '否';
+    }
+    function isMidSource() { return dramaSource === 'mid'; }
+    function applySourceMode() {
+      var isMid = isMidSource();
+      // 是否首次上线：中台=是，手动=否，均锁定不可改
+      lockFirstLaunch();
+      document.querySelectorAll('input[name="f-first-launch"]').forEach(function (r) { r.checked = (r.value === (isMid ? '是' : '否')); });
+      // 项目名称/ID：仅中台展示（只读）；手动隐藏
+      var pf = document.getElementById('f-project-field');
+      if (pf) pf.style.display = isMid ? '' : 'none';
+      // 关联短剧：仅手动展示（已置于基础信息页）
+      var rf = document.getElementById('f-related-drama-field');
+      if (rf) rf.style.display = isMid ? 'none' : '';
+      // APP备案号：仅中台（首次上线=是）展示
+      var af = document.getElementById('f-app-record-field');
+      if (af) af.style.display = isMid ? '' : 'none';
+      if (typeof renderPreview === 'function') renderPreview();
+    }
+    function updateFirstLaunchDependents() { applySourceMode(); }
+    function lockFirstLaunch() {
+      var group = document.getElementById('f-first-launch-group');
+      if (!group) return;
+      group.querySelectorAll('input[name="f-first-launch"]').forEach(function (r) { r.disabled = true; });
+      group.classList.add('disabled');
+    }
+    function unlockFirstLaunch() {
+      var group = document.getElementById('f-first-launch-group');
+      if (!group) return;
+      group.querySelectorAll('input[name="f-first-launch"]').forEach(function (r) { r.disabled = false; });
+      group.classList.remove('disabled');
+    }
+    function relatedDramaPayload() {
+      var sel = msRelatedDrama ? msRelatedDrama.get() : null;
+      return sel ? { id: sel.value, title: sel.label } : null;
+    }
+
+    /* 端原生上架联动：根据所选上线平台名称判断是/否 */
+    function updateNativeLaunch() {
+      var hasNative = selectedLaunchPlatforms.some(function (p) { return p.indexOf('端原生') > -1; });
+      var hasMini = selectedLaunchPlatforms.some(function (p) { return p.indexOf('小程序') > -1; });
+      var val = (hasNative && !hasMini) ? '仅端原生' : (hasNative && hasMini ? '是' : '否');
+      document.querySelectorAll('input[name="f-native"]').forEach(function (r) { r.checked = (r.value === val); });
+      var hint = document.getElementById('f-native-hint');
+      if (hint) hint.textContent = '根据所选「上线平台名称」自动判断为：' + val;
+    }
+
+    /* 收费剧集上限：默认跟随总集数 */
+    var chargeLimitTouched = false;
+    function syncChargeLimit() {
+      if (chargeLimitTouched) return;
+      var limitEl = document.getElementById('f-charge-limit');
+      if (limitEl) limitEl.value = document.getElementById('f-total').value;
+    }
+
+    function epDefaultTitle(e) {
+      var dname = (document.getElementById('f-title').value || '').trim();
+      if (!dname && currentDramaId) { var dd = dramaById(currentDramaId); if (dd) dname = dd.title; }
+      return (dname || '短剧') + '-第' + e.seq + '集';
+    }
+
+    function epSetTitle(id, val) {
+      activeMeta().titles[id] = val;
+    }
+
+    function epDefaultDesc(e) {
+      if (currentDramaId) { var l = linkFor(currentDramaId, e.id); if (l && l.description) return l.description; }
+      return activeMeta().descs[e.id] || '';
+    }
+
+    function epSetDesc(id, val) {
+      activeMeta().descs[id] = val;
+    }
+
+    function epSetSeq(id, el) {
+      var digits = el.value.replace(/\D/g, '');
+      el.value = digits;
+      activeMeta().seqs[id] = digits;
+    }
+
+    /* 剧集集数默认值：文件名末尾「第n集」的 n；识别不到则回退剧集 seq */
+    function epDefaultSeq(e) {
+      var seqs = activeMeta().seqs;
+      if (seqs[e.id] != null && seqs[e.id] !== '') return seqs[e.id];
+      var n = parseEpisodeNo(e.fileName);
+      return (n != null) ? n : e.seq;
+    }
+
+    /* 从文件名末尾提取「第n集」的 n；无法识别返回 null */
+    function parseEpisodeNo(name) {
+      var base = String(name).replace(/\.[^.]+$/, '');
+      var m = base.match(/第(\d+)\s*集$/);
+      return m ? Number(m[1]) : null;
+    }
+
+    /* 批量命名：按文件名末尾「第n集」为右侧全部关联剧集生成标题 */
+    function epBatchName() {
+      var prefix = (document.getElementById('ep-batch-prefix').value || '').trim();
+      if (!prefix) prefix = epDefaultTitlePrefix();
+      var right = rightEpisodes();
+      if (!right.length) { toast('右侧暂无关联剧集'); return; }
+      var named = 0;
+      right.forEach(function (e) {
+        var n = parseEpisodeNo(e.fileName);
+        if (n == null) n = e.seq;
+        if (n == null) return;
+        activeMeta().titles[e.id] = prefix + '-第' + n + '集';
+        named++;
+      });
+      renderTransfer();
+      toast('已按文件名集数批量命名 ' + named + ' 集');
+    }
+
+    /* 批量描述：将输入的描述应用到右侧全部关联剧集 */
+    function epBatchDesc() {
+      var val = (document.getElementById('ep-batch-desc').value || '').trim();
+      var right = rightEpisodes();
+      if (!right.length) { toast('右侧暂无关联剧集'); return; }
+      if (!val) { toast('请先输入要批量设置的剧集描述'); return; }
+      right.forEach(function (e) { activeMeta().descs[e.id] = val; });
+      renderTransfer();
+      toast('已为 ' + right.length + ' 集批量设置剧集描述');
+    }
+
+    function epDefaultTitlePrefix() {
+      var dname = (document.getElementById('f-title').value || '').trim();
+      if (!dname && currentDramaId) { var dd = dramaById(currentDramaId); if (dd) dname = dd.title; }
+      return dname || '短剧';
+    }
+
+    function leftEpisodes() {
+      var kw = (document.getElementById('ep-kw').value || '').trim();
+      var hasDrama = document.getElementById('ep-has-drama').value;
+      var def = document.getElementById('ep-definition').value;
+      var currentIds = activeMeta().episodeIds;
+      return DB.episodes.filter(function (e) {
+        if (currentIds.indexOf(e.id) > -1) return false;
+        var linked = dramasForEpisode(e.id).length > 0;
+        if (hasDrama === 'none' && linked) return false;
+        if (hasDrama === 'assigned' && !linked) return false;
+        if (def && e.definition !== def) return false;
+        if (!kw) return true;
+        return e.fileName.indexOf(kw) > -1 || String(e.seq).indexOf(kw) > -1;
+      });
+    }
+
+    function rightEpisodes() {
+      var currentIds = activeMeta().episodeIds;
+      return DB.episodes.filter(function (e) { return currentIds.indexOf(e.id) > -1; })
+        .sort(function (a, b) {
+          var la = currentDramaId ? linkFor(currentDramaId, a.id) : null;
+          var lb = currentDramaId ? linkFor(currentDramaId, b.id) : null;
+          return (la ? la.seq : a.seq) - (lb ? lb.seq : b.seq);
+        });
+    }
+
+    function epItemHtml(e, side) {
+      var coverCh = (e.fileName || e.id).charAt(0);
+      if (side === 'left') {
+        var dids = dramasForEpisode(e.id);
+        var names = dids.map(function (did) { var d = dramaById(did); return d ? d.title : did; });
+        var owner = dids.length
+          ? '<span class="tag tag-neutral ti-badge" title="' + escAttr(names.join('、')) + '">归属 ' + dids.length + ' 剧</span>'
+          : '<span class="tag tag-primary ti-badge">未关联</span>';
+        var lspec = [e.definition, (e.width && e.height) ? (e.width + '×' + e.height) : '', e.size].filter(Boolean).join(' · ');
+        return '<div class="transfer-item" data-id="' + e.id + '" onclick="toggleEpSide(\'left\',\'' + e.id + '\')" ondblclick="epDblMove(\'left\',\'' + e.id + '\')">' +
+          '<span class="ti-cover" style="background:' + e.cover + '">' + coverCh + '</span>' +
+          '<div class="ti-main">' +
+          '<div class="ti-title">' + e.fileName + '</div>' +
+          '<div class="ti-sub">第' + e.seq + '集 · ' + fmtDur(e.duration) + '</div>' +
+          (lspec ? '<div class="ti-spec">' + escAttr(lspec) + '</div>' : '') +
+          '</div>' + owner + '</div>';
+      }
+      var title = activeMeta().titles[e.id] || epDefaultTitle(e);
+      var desc = epDefaultDesc(e);
+      var spec = [e.definition, (e.width && e.height) ? (e.width + '×' + e.height) : '', e.size].filter(Boolean).join(' · ');
+      return '<div class="transfer-item" data-id="' + e.id + '" onclick="toggleEpSide(\'right\',\'' + e.id + '\')" ondblclick="epDblMove(\'right\',\'' + e.id + '\')">' +
+        '<span class="ti-cover" style="background:' + e.cover + '">' + coverCh + '</span>' +
+        '<div class="ti-main">' +
+        '<div class="ti-title">' + e.fileName + '</div>' +
+        '<div class="ti-sub">第' + e.seq + '集 · ' + fmtDur(e.duration) + '</div>' +
+        (spec ? '<div class="ti-spec">' + escAttr(spec) + '</div>' : '') +
+        '<input class="ti-title-input" value="' + escAttr(title) + '" placeholder="剧集名称（-第n集）" onclick="event.stopPropagation()" oninput="epSetTitle(\'' + e.id + '\', this.value)">' +
+        '<input class="ti-title-input" value="' + escAttr(desc) + '" placeholder="剧集描述" onclick="event.stopPropagation()" oninput="epSetDesc(\'' + e.id + '\', this.value)">' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:4px;"><span style="font-size:var(--font-size-caption);color:var(--text-mute);flex-shrink:0;">集数</span><input class="ti-title-input" style="margin-top:0;width:72px;" type="text" inputmode="numeric" value="' + escAttr(epDefaultSeq(e)) + '" placeholder="第n集" onclick="event.stopPropagation()" oninput="epSetSeq(\'' + e.id + '\', this)"></div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    function ensureDefaultVersion() {
+      if (!versionList.length) {
+        var vid = newVersionId();
+        versionList.push({ id: vid, name: '版本 1' });
+        activeVersionId = vid;
+      }
+      ensureActiveVersion();
+    }
+
+    /* 动态生成分辨率筛选下拉（从剧集池去重），并保留当前选中值 */
+    function renderDefinitionOptions() {
+      var sel = document.getElementById('ep-definition');
+      if (!sel) return;
+      var prev = sel.value;
+      var defs = [];
+      DB.episodes.forEach(function (e) {
+        if (e.definition && defs.indexOf(e.definition) < 0) defs.push(e.definition);
+      });
+      defs.sort();
+      sel.innerHTML = '<option value="">分辨率：全部</option>' + defs.map(function (d) {
+        return '<option value="' + escAttr(d) + '">' + escAttr(d) + '</option>';
+      }).join('');
+      if (defs.indexOf(prev) > -1) sel.value = prev;
+    }
+
+    function renderTransfer() {
+      if (!versionList.length) ensureDefaultVersion();
+      renderDefinitionOptions();
+      if (!epSeeded && currentDramaId) {
+        var seedMeta = activeMeta();
+        linksForDrama(currentDramaId).forEach(function (l) {
+          if (seedMeta.episodeIds.indexOf(l.episodeId) < 0) seedMeta.episodeIds.push(l.episodeId);
+          if (l.title) seedMeta.titles[l.episodeId] = l.title;
+          if (l.description) seedMeta.descs[l.episodeId] = l.description;
+          if (l.seq != null) seedMeta.seqs[l.episodeId] = l.seq;
+        });
+        epSeeded = true;
+      }
+      var left = leftEpisodes();
+      var right = rightEpisodes().sort(function (a, b) { return a.seq - b.seq; });
+      document.getElementById('ep-sel-count').textContent = allEpisodeIds().length;
+      document.getElementById('ep-left-total').textContent = left.length + ' 集';
+      document.getElementById('ep-right-total').textContent = right.length + ' 集';
+      var avgDur = right.length ? Math.round(right.reduce(function (s, e) { return s + e.duration; }, 0) / right.length) : 0;
+      document.getElementById('ep-right-avg').textContent = right.length ? ('平均时长 ' + fmtDur(avgDur)) : '平均时长 —';
+
+      renderVersionBar();
+
+      var lBox = document.getElementById('ep-left-list');
+      lBox.innerHTML = left.length
+        ? left.map(function (e) { return epItemHtml(e, 'left'); }).join('')
+        : '<div class="transfer-empty">暂无可用剧集，可点击右上角「新增剧集」录入</div>';
+
+      var rBox = document.getElementById('ep-right-list');
+      rBox.innerHTML = right.length
+        ? right.map(function (e) { return epItemHtml(e, 'right'); }).join('')
+        : '<div class="transfer-empty">当前版本尚未关联剧集</div>';
+
+      Object.keys(leftSel).forEach(function (id) { var el = lBox.querySelector('[data-id="' + id + '"]'); if (el) el.classList.add('sel'); });
+      Object.keys(rightSel).forEach(function (id) { var el = rBox.querySelector('[data-id="' + id + '"]'); if (el) el.classList.add('sel'); });
+
+      var leftIds = left.map(function (e) { return e.id; });
+      var ca = document.getElementById('ep-left-checkall');
+      if (ca) ca.checked = leftIds.length > 0 && leftIds.every(function (id) { return leftSel[id]; });
+
+      injectIcons();
+      if (typeof renderPreview === 'function') renderPreview();
+    }
+
+    function toggleEpSelectAll() {
+      var checked = document.getElementById('ep-left-checkall').checked;
+      if (checked) {
+        leftEpisodes().forEach(function (e) { leftSel[e.id] = true; });
+      } else {
+        leftSel = {};
+      }
+      renderTransfer();
+    }
+
+    function toggleEpSide(side, id) {
+      var map = side === 'left' ? leftSel : rightSel;
+      if (map[id]) delete map[id]; else map[id] = true;
+      renderTransfer();
+    }
+
+    function epDblMove(side, id) {
+      var ids = activeMeta().episodeIds;
+      if (side === 'left') { if (ids.indexOf(id) < 0) ids.push(id); delete leftSel[id]; }
+      else { var i = ids.indexOf(id); if (i > -1) ids.splice(i, 1); delete rightSel[id]; }
+      renderTransfer();
+    }
+
+    function epMoveRight() {
+      var ids = activeMeta().episodeIds;
+      Object.keys(leftSel).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+      leftSel = {};
+      renderTransfer();
+    }
+
+    function epMoveLeft() {
+      var ids = activeMeta().episodeIds;
+      Object.keys(rightSel).forEach(function (id) { var i = ids.indexOf(id); if (i > -1) ids.splice(i, 1); });
+      rightSel = {};
+      renderTransfer();
+    }
+
+    /* ---- 标签多选（支付宝枚举，分发时复用） ---- */
+    var selectedTags = [];
+    var tagPicker = null;
+
+    function updateTagCount() {
+      document.getElementById('f-tags-count').textContent = '已选 ' + selectedTags.length;
+    }
+    function initTags() {
+      tagPicker = makeTagPicker('f-tags', ALIPAY_TAGS, selectedTags, updateTagCount);
+      updateTagCount();
+    }
+
+    /* ---- 作品标签多选（必填，枚举：文旅合作剧/MCN/真人/漫剧/AI真人/小说解说/批量剧/效率剧/批量剧-小说解说/批量剧-效率剧） ---- */
+    var selectedWorkTags = [];
+    var workTagPicker = null;
+
+    function updateWorkTagCount() {
+      document.getElementById('f-worktags-count').textContent = '已选 ' + selectedWorkTags.length;
+    }
+    function initWorkTags() {
+      workTagPicker = makeTagPicker('f-worktags', WORK_TAGS, selectedWorkTags, updateWorkTagCount);
+      updateWorkTagCount();
+    }
+
+    /* ---- 内容分类两级联动（必填单选） ---- */
+    function updateTypeL2() {
+      var l1 = document.getElementById('f-type-l1').value;
+      var l2 = document.getElementById('f-type-l2');
+      var list = CONTENT_CATEGORIES[l1] || [];
+      l2.innerHTML = list.map(function (c) { return '<option>' + c + '</option>'; }).join('');
+    }
+    function initContentType() {
+      var l1 = document.getElementById('f-type-l1');
+      l1.innerHTML = Object.keys(CONTENT_CATEGORIES).map(function (c) { return '<option>' + c + '</option>'; }).join('');
+      updateTypeL2();
+    }
+    function setContentType(shortplayType) {
+      var l1 = document.getElementById('f-type-l1');
+      var l2 = document.getElementById('f-type-l2');
+      Object.keys(CONTENT_CATEGORIES).forEach(function (k) {
+        if (CONTENT_CATEGORIES[k].indexOf(shortplayType) > -1) {
+          l1.value = k; updateTypeL2(); l2.value = shortplayType;
+        }
+      });
+    }
+
+    function getRadioVal(name) {
+      var el = document.querySelector('input[name="' + name + '"]:checked');
+      return el ? el.value : '—';
+    }
+    function setRadioVal(name, value) {
+      document.querySelectorAll('input[name="' + name + '"]').forEach(function (r) { r.checked = (r.value === value); });
+    }
+    function getBadge() {
+      var el = document.querySelector('input[name="f-badge"]:checked');
+      return el ? el.value : '';
+    }
+    function onBadgeChange() {
+      var clear = document.getElementById('f-badge-clear');
+      if (clear) clear.style.display = getBadge() ? '' : 'none';
+      if (typeof renderPreview === 'function') renderPreview();
+    }
+    function clearBadge() {
+      document.querySelectorAll('input[name="f-badge"]').forEach(function (r) { r.checked = false; });
+      onBadgeChange();
+    }
+
+    /* ---- 中台项目选择（单选） ---- */
+    var selectedProject = null;      // { id, name }
+    var projectPickerSel = null;     // 弹窗内临时选中 id
+
+    function projectLabel(p) { return p.name + ' · ' + p.id; }
+
+    function applySelectedProject(p) {
+      selectedProject = p;
+      var projInput = document.getElementById('f-project');
+      if (projInput) projInput.value = projectLabel(p);
+    }
+
+    function openProjectPicker() {
+      var backdrop = document.createElement('div');
+      backdrop.className = 'confirm-backdrop';
+      backdrop.id = 'project-picker';
+      backdrop.innerHTML =
+        '<div class="project-modal">' +
+          '<div class="project-modal-head">' +
+            '<div><div class="project-modal-title">选择中台项目</div><div class="project-modal-sub">单选来自中台系统的立项信息</div></div>' +
+            '<button type="button" class="icon-btn" data-act="close" aria-label="关闭"><i data-icon="x"></i></button>' +
+          '</div>' +
+          '<div class="project-search"><div class="input"><i data-icon="search"></i><input class="input-control" id="project-kw" type="text" placeholder="搜索项目名称 / ID" oninput="renderProjectList(this.value)"></div></div>' +
+          '<div class="project-list" id="project-list"></div>' +
+          '<div class="project-modal-foot">' +
+            '<button type="button" class="btn btn-ghost btn-md" data-act="close">取消</button>' +
+            '<button type="button" class="btn btn-primary btn-md" data-act="ok" id="project-ok">确认选择</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(backdrop);
+      projectPickerSel = selectedProject ? selectedProject.id : null;
+      renderProjectList('');
+      injectIcons(backdrop);
+      backdrop.addEventListener('click', function (e) {
+        var t = e.target;
+        var actEl = t && t.closest ? t.closest('[data-act]') : null;
+        if (actEl) {
+          var act = actEl.getAttribute('data-act');
+          if (act === 'close') closeProjectPicker();
+          else if (act === 'ok') confirmProject();
+        } else if (t === backdrop) {
+          closeProjectPicker();
+        }
+      });
+      backdrop.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeProjectPicker(); });
+      var kw = document.getElementById('project-kw');
+      if (kw) setTimeout(function () { kw.focus(); }, 0);
+      return false;
+    }
+
+    function closeProjectPicker() {
+      var b = document.getElementById('project-picker');
+      if (b && b.parentNode) b.parentNode.removeChild(b);
+    }
+
+    function renderProjectList(kw) {
+      kw = (kw || '').trim().toLowerCase();
+      var list = MID_PROJECTS.filter(function (p) {
+        if (!kw) return true;
+        return p.name.toLowerCase().indexOf(kw) > -1 || p.id.toLowerCase().indexOf(kw) > -1;
+      });
+      var box = document.getElementById('project-list');
+      if (!box) return;
+      if (!list.length) { box.innerHTML = '<div class="project-empty">未找到匹配项目</div>'; return; }
+      box.innerHTML = list.map(function (p) {
+        var sel = projectPickerSel === p.id;
+        return '<div class="project-item' + (sel ? ' sel' : '') + '" data-id="' + escAttr(p.id) + '" onclick="pickProject(\'' + escAttr(p.id) + '\')">' +
+          '<span class="radio-dot"></span>' +
+          '<div class="project-item-main">' +
+            '<div class="project-item-name">' + escHtml(p.name) + '</div>' +
+            '<div class="project-item-id">' + escHtml(p.id) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function pickProject(id) {
+      projectPickerSel = id;
+      renderProjectList(document.getElementById('project-kw') ? document.getElementById('project-kw').value : '');
+    }
+
+    function confirmProject() {
+      if (!projectPickerSel) { toast('请先选择一个项目'); return; }
+      var p = MID_PROJECTS.find(function (x) { return x.id === projectPickerSel; });
+      if (!p) { toast('未找到该项目'); return; }
+      applySelectedProject(p);
+      closeProjectPicker();
+      toast('已选择项目「' + p.name + '」');
+    }
+
+    function renderPreview() {
+      var t = document.getElementById('f-title').value || '弃少不好惹';
+      var typeLabel = document.getElementById('f-type-l1').value + ' / ' + document.getElementById('f-type-l2').value;
+      var projVal = selectedProject ? projectLabel(selectedProject) : (document.getElementById('f-project').value || '未选择');
+      var rows = [
+        ['项目名称 / ID', projVal],
+        ['短剧名称', t], ['内容分类', typeLabel],
+        ['受众定位', getRadioVal('f-audience')],
+        ['是否男女频通用', getRadioVal('f-unisex')],
+        ['标签', selectedTags.length ? selectedTags.join('、') : '未选择'],
+        ['更新状态', document.getElementById('f-update').value],
+        ['是否 AI 生成', document.getElementById('f-ai').value],
+        ['首次发布时间', document.getElementById('f-first-release').value || '未填写'],
+        ['评级', document.getElementById('f-rating').value],
+        ['付费卡点集数', document.getElementById('f-charge-episode').value || '0'],
+        ['收费剧集上限', document.getElementById('f-charge-limit').value || '—'],
+        ['精彩点位', document.getElementById('f-highlights').value || '未填写'],
+        ['一句话推荐/看点', document.getElementById('f-recommend').value || '未填写'],
+        ['总集数', document.getElementById('f-total').value || '80'],
+        ['剧本团队', selectedScriptTeams.length ? selectedScriptTeams.join('、') : '未选择'],
+        ['制作团队', selectedProdTeams.length ? selectedProdTeams.join('、') : '未选择'],
+        ['合作剧类型', selectedCoopTypes.length ? selectedCoopTypes.join('、') : '未选择'],
+        ['作品标签', selectedWorkTags.length ? selectedWorkTags.join('、') : '未选择'],
+        ['短剧角标', getBadge() || '未设置'],
+        ['每集区间定价', (document.getElementById('f-price-min').value || '50') + ' ～ ' + (document.getElementById('f-price-max').value || '990')],
+        ['首发平台', selectedDebutPlatforms.length ? selectedDebutPlatforms.join('、') : '未设置'],
+        ['上线平台', selectedLaunchPlatforms.length ? selectedLaunchPlatforms.join('、') : '未选择'],
+        ['端原生上架', getRadioVal('f-native')],
+        ['小程序上下架状态', getRadioVal('f-mini-status')],
+        ['点赞初始值', (document.getElementById('f-like-min').value || '35') + ' 万 ～ ' + (document.getElementById('f-like-max').value || '40') + ' 万'],
+        ['备注', document.getElementById('f-remark').value],
+        ['是否首次上线', getRadioVal('f-first-launch')]
+      ];
+      var relSel = msRelatedDrama ? msRelatedDrama.get() : null;
+      if (getFirstLaunch() === '否') {
+        rows.push(['关联短剧', relSel ? relSel.label : '未选择']);
+      } else {
+        rows.push(['APP备案号', document.getElementById('f-app-record').value || '未填写']);
+      }
+      rows.push(['剧集', allEpisodeIds().length + ' 集 · ' + versionList.length + ' 个版本']);
+      document.getElementById('preview').innerHTML = rows.map(function (r) {
+        return '<div class="form-field"><span class="form-label">' + r[0] + '</span><span class="mono-badge" style="font-size:14px;color:var(--text);">' + r[1] + '</span></div>';
+      }).join('');
+    }
+
+    async function submitDrama() {
+      if (!selectedTags.length) { toast('标签为必填，请至少选择一个'); return; }
+      if (!(document.getElementById('f-recommend').value || '').trim()) { toast('一句话推荐/看点为必填，请输入'); return; }
+      if (!document.getElementById('f-first-release').value) { toast('首次发布时间为必填，请选择日期'); return; }
+      var chargeEpVal = document.getElementById('f-charge-episode').value;
+      if (chargeEpVal === '' || chargeEpVal == null) { toast('付费卡点集数为必填，请输入'); return; }
+      var chargeLimitVal = document.getElementById('f-charge-limit').value;
+      if (chargeLimitVal === '' || chargeLimitVal == null) { toast('收费剧集上限为必填，请输入'); return; }
+      if (!selectedScriptTeams.length) { toast('剧本团队为必填，请至少选择一个'); return; }
+      if (!selectedProdTeams.length) { toast('制作团队为必填，请至少选择一个'); return; }
+      if (!selectedCoopTypes.length) { toast('合作剧类型为必填，请至少选择一个'); return; }
+      if (!selectedWorkTags.length) { toast('作品标签为必填，请至少选择一个'); return; }
+      if (!selectedLaunchPlatforms.length) { toast('上线平台为必填，请至少选择一个'); return; }
+      if (getFirstLaunch() === '否' && !(msRelatedDrama && msRelatedDrama.get())) { toast('关联短剧为必填，请选择'); return; }
+      var btn = document.getElementById('btn-next');
+      btn.disabled = true; btn.textContent = '提交中…';
+      var allIds = allEpisodeIds();
+      var res = await API.saveDrama({ id: null, title: document.getElementById('f-title').value, source: dramaSource, project: selectedProject ? selectedProject.id : (document.getElementById('f-project') ? document.getElementById('f-project').value : ''), tags: selectedTags.slice(), firstReleaseDate: document.getElementById('f-first-release').value, rating: document.getElementById('f-rating').value, recommend: document.getElementById('f-recommend').value, chargeEpisode: Number(chargeEpVal) || 0, chargeLimit: Number(chargeLimitVal) || 0, scriptTeams: selectedScriptTeams.slice(), productionTeams: selectedProdTeams.slice(), coopTypes: selectedCoopTypes.slice(), workTags: selectedWorkTags.slice(), badge: getBadge(), debutPlatforms: selectedDebutPlatforms.slice(), launchPlatforms: selectedLaunchPlatforms.slice(), nativeLaunch: getRadioVal('f-native'), priceMin: Number(document.getElementById('f-price-min').value) || 50, priceMax: Number(document.getElementById('f-price-max').value) || 990, likeMin: Number(document.getElementById('f-like-min').value) || 35, likeMax: Number(document.getElementById('f-like-max').value) || 40, remark: document.getElementById('f-remark').value, firstLaunch: getRadioVal('f-first-launch'), relatedDrama: relatedDramaPayload(), appRecord: document.getElementById('f-app-record').value || '', miniStatus: getRadioVal('f-mini-status'), highlights: document.getElementById('f-highlights').value || '', episodeIds: allIds });
+      btn.disabled = false;
+      var newId = res.data.id;
+      // 模拟后端：重建该短剧的关联关系（多对多，按版本写入）
+      DB.episodeLinks = DB.episodeLinks.filter(function (l) { return l.dramaId !== (currentDramaId || newId); });
+      versionList.forEach(function (v) {
+        var m = vmeta(v.id);
+        m.episodeIds.forEach(function (eid) {
+          var ep = episodeById(eid);
+          if (!ep) return;
+          var seqVal = m.seqs[eid];
+          if (seqVal == null || seqVal === '') { var nn = parseEpisodeNo(ep.fileName); seqVal = (nn != null) ? nn : ep.seq; }
+          DB.episodeLinks.push({
+            dramaId: newId, episodeId: eid,
+            seq: Number(seqVal) || ep.seq,
+            title: m.titles[eid] || epDefaultTitle(ep),
+            description: m.descs[eid] || '',
+            versionId: v.id, versionName: v.name
+          });
+        });
+      });
+      toast('短剧创建成功，已关联 ' + allIds.length + ' 集 · ' + versionList.length + ' 个版本');
+      setTimeout(function () { window.location.href = 'episodes.html?drama=' + newId; }, 900);
+    }
+
+    function resetForm() {
+      document.querySelectorAll('.input-control').forEach(function (el) { el.value = ''; });
+      selectedProject = null;
+      selectedScriptTeams.length = 0;
+      selectedProdTeams.length = 0;
+      selectedCoopTypes.length = 0;
+      selectedWorkTags.length = 0;
+      selectedDebutPlatforms.length = 0;
+      selectedLaunchPlatforms.length = 0;
+      if (msScriptTeams) msScriptTeams.render();
+      if (msProdTeams) msProdTeams.render();
+      if (msCoopTypes) msCoopTypes.render();
+      if (workTagPicker) workTagPicker.render();
+      if (msDebutPlatforms) msDebutPlatforms.render();
+      if (msLaunchPlatforms) msLaunchPlatforms.render();
+      if (msRelatedDrama) msRelatedDrama.set(null);
+      setRadioVal('f-mini-status', '下架');
+      clearBadge();
+      applySourceMode();
+      document.getElementById('f-price-min').value = 50;
+      document.getElementById('f-price-max').value = 990;
+      document.getElementById('f-like-min').value = 35;
+      document.getElementById('f-like-max').value = 40;
+      chargeLimitTouched = false;
+      updateNativeLaunch();
+      toast('表单已重置');
+    }
+
+    function prefillFromQuery() {
+      var id = new URLSearchParams(location.search).get('id');
+      if (!id) return;
+      var d = DB.dramas.find(function (x) { return x.id === id; });
+      if (!d) return;
+      currentDramaId = id;
+      dramaSource = (d.source === 'mid') ? 'mid' : 'manual';
+      document.getElementById('page-title').textContent = '编辑短剧';
+      document.getElementById('crumb-title').textContent = '编辑 · ' + d.title;
+      document.getElementById('f-title').value = d.title;
+      var proj = (d.project && typeof MID_PROJECTS !== 'undefined') ? MID_PROJECTS.find(function (p) { return p.id === d.project; }) : null;
+      if (proj) {
+        applySelectedProject(proj);
+      } else {
+        document.getElementById('f-project').value = d.project || '';
+      }
+      document.getElementById('f-synopsis').value = d.synopsis || '';
+      document.getElementById('f-recommend').value = d.recommend || '';
+      document.getElementById('f-first-release').value = d.firstReleaseDate || '';
+      setContentType(d.shortplayType);
+      selectedTags.length = 0;
+      Array.prototype.push.apply(selectedTags, (d.tags || []).filter(function (x) { return ALIPAY_TAGS.indexOf(x) > -1; }));
+      if (tagPicker) tagPicker.render();
+      updateTagCount();
+      if (d.rating && ['S', 'A', 'B'].indexOf(d.rating) > -1) document.getElementById('f-rating').value = d.rating;
+      if (d.chargeEpisode != null) document.getElementById('f-charge-episode').value = d.chargeEpisode;
+      if (d.highlights) document.getElementById('f-highlights').value = d.highlights;
+      if (d.chargeLimit != null) { document.getElementById('f-charge-limit').value = d.chargeLimit; chargeLimitTouched = true; }
+      if (d.scriptTeams && d.scriptTeams.length) { selectedScriptTeams.length = 0; Array.prototype.push.apply(selectedScriptTeams, d.scriptTeams.filter(function (x) { return SCRIPT_TEAMS.indexOf(x) > -1; })); }
+      if (d.productionTeams && d.productionTeams.length) { selectedProdTeams.length = 0; Array.prototype.push.apply(selectedProdTeams, d.productionTeams.filter(function (x) { return PRODUCTION_TEAMS.indexOf(x) > -1; })); }
+      if (d.coopTypes && d.coopTypes.length) { selectedCoopTypes.length = 0; Array.prototype.push.apply(selectedCoopTypes, d.coopTypes.filter(function (x) { return COOP_TYPES.indexOf(x) > -1; })); }
+      if (d.workTags && d.workTags.length) { selectedWorkTags.length = 0; Array.prototype.push.apply(selectedWorkTags, d.workTags.filter(function (x) { return WORK_TAGS.indexOf(x) > -1; })); }
+      if (workTagPicker) workTagPicker.render();
+      if (d.badge && DRAMA_BADGES.indexOf(d.badge) > -1) { setRadioVal('f-badge', d.badge); onBadgeChange(); }
+      if (d.debutPlatforms && d.debutPlatforms.length) { selectedDebutPlatforms.length = 0; Array.prototype.push.apply(selectedDebutPlatforms, d.debutPlatforms.filter(function (x) { return LAUNCH_PLATFORMS.indexOf(x) > -1; })); }
+      if (d.launchPlatforms && d.launchPlatforms.length) { selectedLaunchPlatforms.length = 0; Array.prototype.push.apply(selectedLaunchPlatforms, d.launchPlatforms.filter(function (x) { return LAUNCH_PLATFORMS.indexOf(x) > -1; })); }
+      if (d.priceMin != null) document.getElementById('f-price-min').value = d.priceMin;
+      if (d.priceMax != null) document.getElementById('f-price-max').value = d.priceMax;
+      if (d.likeMin != null) document.getElementById('f-like-min').value = d.likeMin;
+      if (d.likeMax != null) document.getElementById('f-like-max').value = d.likeMax;
+      if (d.remark) document.getElementById('f-remark').value = d.remark;
+      if (d.miniStatus && ['上架', '下架', '隐藏'].indexOf(d.miniStatus) > -1) setRadioVal('f-mini-status', d.miniStatus);
+      if (d.appRecord) document.getElementById('f-app-record').value = d.appRecord;
+      if (msRelatedDrama) {
+        var rel = d.relatedDrama;
+        if (rel && typeof rel === 'object' && rel.id) { var rd1 = DB.dramas.find(function (x) { return x.id === rel.id; }); msRelatedDrama.set({ value: rel.id, label: rel.title || rel.id, project: (rd1 && rd1.project) || '—' }); }
+        else if (rel && typeof rel === 'string') { var m2 = DB.dramas.find(function (x) { return x.title === rel; }); if (m2) msRelatedDrama.set({ value: m2.id, label: m2.title, project: m2.project || '—' }); }
+      }
+      if (d.nativeLaunch && ['否', '是', '仅端原生'].indexOf(d.nativeLaunch) > -1) {
+        document.querySelectorAll('input[name="f-native"]').forEach(function (r) { r.checked = (r.value === d.nativeLaunch); });
+      } else { updateNativeLaunch(); }
+      if (d.firstLaunch && ['是', '否'].indexOf(d.firstLaunch) > -1) {
+        document.querySelectorAll('input[name="f-first-launch"]').forEach(function (r) { r.checked = (r.value === d.firstLaunch); });
+      }
+      applySourceMode();
+      if (msScriptTeams) msScriptTeams.render();
+      if (msProdTeams) msProdTeams.render();
+      if (msCoopTypes) msCoopTypes.render();
+      if (msDebutPlatforms) msDebutPlatforms.render();
+      if (msLaunchPlatforms) msLaunchPlatforms.render();
+      toast('已载入「' + d.title + '」');
+    }
+
+    /* ---- 短剧名称相似雷同检测 ---- */
+    function normalizeTitle(s) {
+      return String(s == null ? '' : s)
+        .toLowerCase()
+        // 全角字符转半角
+        .replace(/[\uFF01-\uFF5E]/g, function (ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+        // 去除空白与常见中英文标点
+        .replace(/[\s\u3000，。！？、；：""''《》〈〉（）()[\]【】\-—_|·・,．.!?;:'"\/\\]+/g, '');
+    }
+
+    function levenshtein(a, b) {
+      var m = a.length, n = b.length;
+      if (!m) return n;
+      if (!n) return m;
+      var dp = [], i, j;
+      for (i = 0; i <= m; i++) { dp[i] = [i]; }
+      for (j = 0; j <= n; j++) { dp[0][j] = j; }
+      for (i = 1; i <= m; i++) {
+        for (j = 1; j <= n; j++) {
+          var cost = a[i - 1] === b[j - 1] ? 0 : 1;
+          dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        }
+      }
+      return dp[m][n];
+    }
+
+    function titleMatchReason(raw, d) {
+      var input = (raw || '').trim();
+      var t = (d.title || '').trim();
+      if (!input || !t) return '';
+      var inNorm = normalizeTitle(input);
+      var tNorm = normalizeTitle(t);
+      if (input === t) return '完全相同';
+      if (inNorm === tNorm) return '归一化后相同';
+      if (inNorm.indexOf(tNorm) > -1 || tNorm.indexOf(inNorm) > -1) return '名称包含';
+      var minLen = Math.min(inNorm.length, tNorm.length);
+      var threshold = minLen <= 4 ? 1 : 2;
+      var dist = levenshtein(inNorm, tNorm);
+      if (dist <= threshold) return '字面相近';
+      return '';
+    }
+
+    function findSimilarTitleMatches(raw) {
+      var input = (raw || '').trim();
+      if (!input) return [];
+      var matches = [];
+      var dramas = (typeof DB !== 'undefined' && DB.dramas) ? DB.dramas : [];
+      dramas.forEach(function (d) {
+        if (currentDramaId && d.id === currentDramaId) return; // 编辑自身时排除
+        var reason = titleMatchReason(input, d);
+        if (reason) matches.push({ title: d.title, reason: reason, dist: levenshtein(normalizeTitle(input), normalizeTitle(d.title)) });
+      });
+      var rank = { '完全相同': 0, '归一化后相同': 1, '名称包含': 2, '字面相近': 3 };
+      matches.sort(function (a, b) { return (rank[a.reason] - rank[b.reason]) || (a.dist - b.dist) || (a.title.length - b.title.length); });
+      return matches;
+    }
+
+    function checkDuplicateTitle() {
+      var input = document.getElementById('f-title');
+      var box = document.getElementById('f-title-dup');
+      if (!input || !box) return;
+      var matches = findSimilarTitleMatches(input.value);
+      if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+      var top = matches.slice(0, 5);
+      var html = '<div class="dup-title">已存在名称相近的短剧（不影响提交）：</div>';
+      top.forEach(function (m) {
+        var cls = m.reason === '完全相同' ? 'tag-error' : 'tag-warning';
+        html += '<div class="dup-item"><span class="tag ' + cls + '">' + m.reason + '</span><span>' + escHtml(m.title) + '</span></div>';
+      });
+      if (matches.length > top.length) html += '<div class="dup-more">… 等共 ' + matches.length + ' 条相近剧名</div>';
+      box.innerHTML = html;
+      box.style.display = 'flex';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initTags();
+      initWorkTags();
+      initContentType();
+      initMultiSelects();
+      applySourceMode();
+      prefillFromQuery();
+      renderSteps();
+      renderPreview();
+      renderTransfer();
+      renderActors();
+      if (!actors.length) { addActor('刘洋', '陈凡', ''); addActor('陈默', '林婉儿', ''); }
+    });
+  </script>
+</body>
+</html>

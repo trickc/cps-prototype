@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>短剧列表 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="shortplay-list">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧管理 / <b>短剧列表</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">短剧列表</h1>
+          <p class="page-desc">端原生短剧与挂载短剧的统一列表视图，支持按来源、类型、状态等维度筛选。</p>
+        </div>
+      </div>
+
+      <!-- 筛选工具栏 -->
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="filter"></i>筛选条件</div>
+        </div>
+        <div class="panel-body" style="display:flex; flex-direction:column; gap:var(--space-4); padding: var(--space-4) var(--space-5);">
+          <div class="filter-grid">
+            <div class="input"><i data-icon="search"></i><input class="input-control" placeholder="短剧名称 / ID"></div>
+            <select class="input"><option value="">播放源</option><option>抖音</option><option>小程序</option><option>本地</option><option>视频号</option></select>
+            <select class="input"><option value="">合作剧类型</option><option>承制剧-微短剧</option><option>承制剧-数字营销中心</option><option>自制剧</option><option>外部剧</option><option>外部承制剧-承制</option><option>外部承制剧-小说</option></select>
+            <select class="input"><option value="">内容团队</option><option>念三团队</option><option>九天团队</option><option>慕白团队</option></select>
+            <div class="input"><input class="input-control" placeholder="拍摄团队"></div>
+            <select class="input"><option value="">合作方</option><option>麦芽传媒</option><option>外部合作方</option></select>
+            <select class="input"><option value="">状态</option><option>上架</option><option>下架</option><option>隐藏</option></select>
+            <select class="input"><option value="">端原生上架</option><option>否</option><option>是</option><option>仅端原生</option></select>
+            <select class="input"><option value="">短剧类型</option><option>逆袭</option><option>古装</option><option>言情</option><option>家庭</option></select>
+            <select class="input"><option value="">作品分类</option><option>男频</option><option>女频</option><option>免费短剧</option><option>付费短剧</option></select>
+            <select class="input"><option value="">作品标签</option><option>爽文</option><option>甜宠</option><option>战神</option><option>都市</option><option>逆袭</option></select>
+            <select class="input"><option value="">首次上线</option><option>是</option><option>否</option></select>
+          </div>
+          <div class="filter-actions">
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：搜索')"><i data-icon="search"></i>搜索</button>
+            <button class="btn btn-ghost btn-md" onclick="toast('原型示意：操作说明')">操作说明</button>
+            <span class="spacer"></span>
+            <button class="btn btn-primary btn-md" onclick="goCreate()"><i data-icon="plus"></i>新增短剧</button>
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：导出')"><i data-icon="download"></i>导出</button>
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：批量分配')">批量分配</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 表格 -->
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="list"></i>短剧列表</div>
+          <span class="tag tag-neutral">共 10469 条</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>短剧名称</th>
+                <th>合作剧类型</th>
+                <th>内容团队</th>
+                <th>短剧状态</th>
+                <th>总集数 / 收费</th>
+                <th>播放源</th>
+                <th>备注</th>
+                <th>小程序分类</th>
+                <th>创建人</th>
+                <th>新增时间</th>
+                <th style="text-align:right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">入选地府外卖员后，短命老公他…</span>
+                      <span class="cell-sub">SPR-20261105-001</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">承制剧-微短剧</span>
+                    <span class="cell-sub">外部承制剧-承制</span>
+                  </div>
+                </td>
+                <td>念三团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">80 集</span>
+                    <span class="cell-sub">开始收费 12 · 上限 66</span>
+                  </div>
+                </td>
+                <td>抖音</td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>情感，都市</td>
+                <td>舟横</td>
+                <td>2026-11-05 10:24</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <a class="link-action" onclick="goCreate()">编辑</a>
+                  <a class="link-action" onclick="toast('原型示意：复制')">复制</a>
+                  <a class="link-action" href="distribute.html?id=SPR-20261105-001">一键分发</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">被关五年后，我成了国医传人</span>
+                      <span class="cell-sub">SPR-20261115-018</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">承制剧-微短剧</span>
+                    <span class="cell-sub">外部承制剧-承制</span>
+                  </div>
+                </td>
+                <td>九天团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">60 集</span>
+                    <span class="cell-sub">开始收费 9 · 上限 30</span>
+                  </div>
+                </td>
+                <td>抖音</td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>逆袭，情感</td>
+                <td>林晚</td>
+                <td>2026-11-15 14:02</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <a class="link-action" onclick="goCreate()">编辑</a>
+                  <a class="link-action" onclick="toast('原型示意：复制')">复制</a>
+                  <a class="link-action" href="distribute.html?id=SPR-20261115-018">一键分发</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">错嫁小叔后，我不傻了</span>
+                      <span class="cell-sub">SPR-20261115-041</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="cell-title">外部承制剧-小说</span></td>
+                <td>慕白团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">90 集</span>
+                    <span class="cell-sub">开始收费 50 · 上限 90</span>
+                  </div>
+                </td>
+                <td>抖音</td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>古装，情感</td>
+                <td>舟横</td>
+                <td>2026-11-15 16:30</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <a class="link-action" href="distribute.html?id=SPR-20261115-041">一键分发</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">重生90，这块地是我的</span>
+                      <span class="cell-sub">SPR-20261115-052</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="cell-title">自制剧</span></td>
+                <td>慕白团队 / 念三团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">60 集</span>
+                    <span class="cell-sub">开始收费 11 · 上限 30</span>
+                  </div>
+                </td>
+                <td>抖音 / 本地</td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>逆袭，情感</td>
+                <td>顾言</td>
+                <td>2026-11-15 18:45</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <a class="link-action" onclick="goCreate()">编辑</a>
+                  <a class="link-action" href="distribute.html?id=SPR-20261115-052">一键分发</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span>共 10469 条</span>
+          <div class="pg-btns">
+            <button class="pg-btn">‹</button>
+            <button class="pg-btn active">1</button>
+            <button class="pg-btn">2</button>
+            <button class="pg-btn">3</button>
+            <button class="pg-btn">…</button>
+            <button class="pg-btn">524</button>
+            <button class="pg-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script>
+    function goCreate() { window.location.href = 'create.html'; }
+  </script>
+</body>
+</html>

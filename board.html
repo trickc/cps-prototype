@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分发看板 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="board">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">分发 / <b>分发看板</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">分发看板</h1>
+          <p class="page-desc">自动分发为系统行为，按平台统计推送量与成功率；手动分发按运营与平台维度统计。</p>
+        </div>
+      </div>
+
+      <!-- 自动分发看板（系统行为） -->
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="send"></i>自动分发看板</div>
+          <span class="tag tag-success">系统行为 · 无运营维度</span>
+        </div>
+        <div class="panel-body" style="padding: var(--space-4) var(--space-5);">
+          <div class="filter-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+            <div class="form-field">
+              <label class="form-label">开始日期</label>
+              <div class="input"><input class="input-control" type="date" id="auto-start" value="2026-11-10"></div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">结束日期</label>
+              <div class="input"><input class="input-control" type="date" id="auto-end" value="2026-11-16"></div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">平台</label>
+              <select class="input" id="auto-platform">
+                <option value="">全部</option>
+                <option>搜狐</option>
+                <option>oppo</option>
+                <option>百家号</option>
+                <option>支付宝</option>
+                <option>银河</option>
+                <option>荣耀</option>
+                <option>VIVO</option>
+                <option>论坛小程序</option>
+                <option>媒资测试</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions" style="margin-top: var(--space-3);">
+            <button class="btn btn-primary btn-md" onclick="applyAuto()"><i data-icon="search"></i>查询</button>
+            <button class="btn btn-ghost btn-md" onclick="resetAuto()">重置</button>
+            <span class="spacer"></span>
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：导出数据')"><i data-icon="download"></i>导出</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto; border-top:1px solid var(--border-faint);">
+          <table class="data-table" id="auto-table">
+            <thead>
+              <tr>
+                <th>平台</th>
+                <th>成功推送数量</th>
+                <th>总推送数量</th>
+                <th>成功率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4"><div class="empty-state"><i data-icon="send"></i><span class="empty-title">加载中…</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 运营手动分发看板 -->
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="users"></i>运营手动分发看板</div>
+          <span class="tag tag-primary">按运营 · 平台统计</span>
+        </div>
+        <div class="panel-body" style="padding: var(--space-4) var(--space-5);">
+          <div class="filter-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+            <div class="form-field">
+              <label class="form-label">开始日期</label>
+              <div class="input"><input class="input-control" type="date" id="man-start" value="2026-11-10"></div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">结束日期</label>
+              <div class="input"><input class="input-control" type="date" id="man-end" value="2026-11-16"></div>
+            </div>
+            <div class="form-field">
+              <label class="form-label">平台</label>
+              <select class="input" id="man-platform">
+                <option value="">全部</option>
+                <option>搜狐</option>
+                <option>oppo</option>
+                <option>百家号</option>
+                <option>支付宝</option>
+                <option>银河</option>
+                <option>荣耀</option>
+                <option>VIVO</option>
+                <option>论坛小程序</option>
+                <option>媒资测试</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label class="form-label">运营</label>
+              <select class="input" id="man-operator">
+                <option value="">全部运营</option>
+                <option>舟横</option>
+                <option>林晚</option>
+                <option>顾言</option>
+              </select>
+            </div>
+          </div>
+          <div class="filter-actions" style="margin-top: var(--space-3);">
+            <button class="btn btn-primary btn-md" onclick="applyManual()"><i data-icon="search"></i>查询</button>
+            <button class="btn btn-ghost btn-md" onclick="resetManual()">重置</button>
+            <span class="spacer"></span>
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：导出数据')"><i data-icon="download"></i>导出</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto; border-top:1px solid var(--border-faint);">
+          <table class="data-table" id="manual-table">
+            <thead>
+              <tr>
+                <th>运营</th>
+                <th>平台</th>
+                <th>提交短剧数量</th>
+                <th>成功数量</th>
+                <th>成功率</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="5"><div class="empty-state"><i data-icon="users"></i><span class="empty-title">加载中…</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 看板规划 -->
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="layout-dashboard"></i>数据看板规划</div>
+          <span class="tag tag-primary">规划中</span>
+        </div>
+        <div class="panel-body" style="padding: var(--space-4) var(--space-5);">
+          <div class="req-list">
+            <div class="req-item"><span class="req-tag tag tag-success">已实现</span><span class="req-text">自动分发看板：系统行为，按平台统计成功推送数量 / 总推送数量 / 成功率</span></div>
+            <div class="req-item"><span class="req-tag tag tag-success">已实现</span><span class="req-text">运营手动分发看板：按运营 · 平台维度统计提交数量与成功数量</span></div>
+            <div class="req-item"><span class="req-tag tag tag-primary">模块 3</span><span class="req-text">分发趋势：按日/周/月的折线图，区分成功与失败趋势</span></div>
+            <div class="req-item"><span class="req-tag tag tag-primary">模块 4</span><span class="req-text">平台分布：各平台分发占比与上下架状态分布</span></div>
+            <div class="req-item"><span class="req-tag tag tag-primary">模块 5</span><span class="req-text">失败原因：提审驳回、同步失败、参数错误等分布分析</span></div>
+            <div class="req-item"><span class="req-tag tag tag-primary">模块 6</span><span class="req-text">待处理队列：超时、驳回、待重推的分发任务列表</span></div>
+          </div>
+          <div class="sync-note">
+            <i data-icon="info"></i>
+            <span>自动分发与手动分发已拆分为两个看板；其余模块可逐期接入趋势、失败分析与待处理队列。</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script>
+    /* 自动分发（系统行为）：按平台聚合，无运营维度 */
+    var AUTO_ROWS = [
+      { platform: '搜狐', total: 195, success: 185 },
+      { platform: 'oppo', total: 170, success: 160 },
+      { platform: '百家号', total: 136, success: 128 },
+      { platform: '支付宝', total: 108, success: 103 },
+      { platform: '银河', total: 90, success: 86 },
+      { platform: '荣耀', total: 72, success: 68 },
+      { platform: 'VIVO', total: 60, success: 56 },
+      { platform: '论坛小程序', total: 48, success: 46 },
+      { platform: '媒资测试', total: 37, success: 35 }
+    ];
+
+    /* 运营手动分发：运营 × 平台 */
+    var MANUAL_ROWS = [
+      { operator: '舟横', platform: '搜狐', submitted: 19, success: 13 },
+      { operator: '舟横', platform: 'oppo', submitted: 16, success: 12 },
+      { operator: '林晚', platform: '百家号', submitted: 14, success: 11 },
+      { operator: '顾言', platform: '支付宝', submitted: 12, success: 9 },
+      { operator: '舟横', platform: '银河', submitted: 8, success: 5 },
+      { operator: '林晚', platform: '荣耀', submitted: 8, success: 6 },
+      { operator: '顾言', platform: 'VIVO', submitted: 6, success: 4 },
+      { operator: '舟横', platform: '论坛小程序', submitted: 4, success: 3 },
+      { operator: '林晚', platform: '媒资测试', submitted: 4, success: 3 }
+    ];
+
+    function pct(a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; }
+
+    function rateCls(sub, suc) { return (sub ? suc / sub : 0) >= 0.9 ? 'tag-success' : ((sub ? suc / sub : 0) >= 0.8 ? 'tag-neutral' : 'tag-warning'); }
+
+    /* ---------- 自动分发看板 ---------- */
+    function renderAuto(platform) {
+      var list = platform ? AUTO_ROWS.filter(function (r) { return r.platform === platform; }) : AUTO_ROWS;
+      var totalSub = 0, totalSuc = 0, rowsHtml = '';
+      list.forEach(function (r) {
+        totalSub += r.total; totalSuc += r.success;
+        rowsHtml += '<tr>' +
+          '<td><span class="cell-title">' + r.platform + '</span></td>' +
+          '<td class="num">' + r.success + '</td>' +
+          '<td class="num">' + r.total + '</td>' +
+          '<td><span class="tag ' + rateCls(r.total, r.success) + '">' + pct(r.success, r.total) + '</span></td>' +
+        '</tr>';
+      });
+      if (!list.length) {
+        rowsHtml = '<tr><td colspan="4"><div class="empty-state"><i data-icon="send"></i><span class="empty-title">暂无匹配数据</span><span>请调整筛选条件后重试</span></div></td></tr>';
+      } else {
+        rowsHtml += '<tr class="row-total">' +
+          '<td><span class="cell-title">合计</span></td>' +
+          '<td class="num">' + totalSuc + '</td>' +
+          '<td class="num">' + totalSub + '</td>' +
+          '<td>' + pct(totalSuc, totalSub) + '</td>' +
+        '</tr>';
+      }
+      var tbody = document.querySelector('#auto-table tbody');
+      if (tbody) tbody.innerHTML = rowsHtml;
+    }
+
+    function applyAuto() {
+      renderAuto(document.getElementById('auto-platform').value);
+      toast('自动分发看板已更新');
+    }
+
+    function resetAuto() {
+      document.getElementById('auto-start').value = '2026-11-10';
+      document.getElementById('auto-end').value = '2026-11-16';
+      document.getElementById('auto-platform').value = '';
+      renderAuto('');
+      toast('筛选条件已重置');
+    }
+
+    /* ---------- 运营手动分发看板 ---------- */
+    function renderManual(kw) {
+      var plat = (kw && kw.platform) || '';
+      var op = (kw && kw.operator) || '';
+      var list = MANUAL_ROWS.filter(function (r) {
+        if (plat && r.platform !== plat) return false;
+        if (op && r.operator !== op) return false;
+        return true;
+      });
+
+      var totalSub = 0, totalSuc = 0, rowsHtml = '';
+      list.forEach(function (r) {
+        totalSub += r.submitted; totalSuc += r.success;
+        rowsHtml += '<tr>' +
+          '<td><span class="cell-title">' + r.operator + '</span></td>' +
+          '<td>' + r.platform + '</td>' +
+          '<td class="num">' + r.submitted + '</td>' +
+          '<td class="num">' + r.success + '</td>' +
+          '<td><span class="tag ' + rateCls(r.submitted, r.success) + '">' + pct(r.success, r.submitted) + '</span></td>' +
+        '</tr>';
+      });
+      if (!list.length) {
+        rowsHtml = '<tr><td colspan="5"><div class="empty-state"><i data-icon="users"></i><span class="empty-title">暂无匹配数据</span><span>请调整筛选条件后重试</span></div></td></tr>';
+      } else {
+        rowsHtml += '<tr class="row-total">' +
+          '<td colspan="2"><span class="cell-title">合计</span></td>' +
+          '<td class="num">' + totalSub + '</td>' +
+          '<td class="num">' + totalSuc + '</td>' +
+          '<td>' + pct(totalSuc, totalSub) + '</td>' +
+        '</tr>';
+      }
+      var tbody = document.querySelector('#manual-table tbody');
+      if (tbody) tbody.innerHTML = rowsHtml;
+    }
+
+    function applyManual() {
+      renderManual({
+        platform: document.getElementById('man-platform').value,
+        operator: document.getElementById('man-operator').value
+      });
+      toast('手动分发看板已更新');
+    }
+
+    function resetManual() {
+      document.getElementById('man-start').value = '2026-11-10';
+      document.getElementById('man-end').value = '2026-11-16';
+      document.getElementById('man-platform').value = '';
+      document.getElementById('man-operator').value = '';
+      renderManual({});
+      toast('筛选条件已重置');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      renderAuto('');
+      renderManual({});
+    });
+  </script>
+</body>
+</html>

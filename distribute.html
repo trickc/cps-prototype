@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>一键分发 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .dist-layout { display: grid; grid-template-columns: 1fr; gap: var(--space-6); }
+    .platform-chips { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+    .platform-chip {
+      display: flex; align-items: center; gap: var(--space-2);
+      padding: 8px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background: var(--surface); color: var(--text-sub); cursor: pointer; font-size: var(--font-size-body);
+      transition: all var(--duration-fast) var(--ease-standard);
+    }
+    .platform-chip:hover { border-color: var(--border-strong); }
+    .platform-chip.sel { border-color: var(--primary); background: var(--primary-muted); color: var(--primary); font-weight: 500; }
+    .platform-chip i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+    .check-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--border-faint); }
+    .check-row:last-child { border-bottom: none; }
+    .check-opt { display: flex; align-items: center; gap: var(--space-2); flex: 1; }
+    .check-opt i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); color: var(--primary); }
+    .check-opt .lbl { font-size: var(--font-size-body); }
+    .check-opt .note { font-size: var(--font-size-caption); color: var(--text-mute); margin-left: 2px; }
+    .cf-inactive { opacity: .55; }
+    .form-field .req.off { display: none; }
+    .form-field.cf-inactive .tag-pick { pointer-events: none; }
+    .map-input { width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: var(--font-size-body); font-family: var(--font-body); color: var(--text); background: var(--surface); }
+    .map-input:focus { outline: none; border-color: var(--primary); }
+    .special-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .special-row { display: grid; grid-template-columns: 200px 1fr; gap: var(--space-3) var(--space-4); align-items: start; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-faint); }
+    .special-row:last-child { border-bottom: none; }
+    .special-meta { display: flex; flex-direction: column; gap: 3px; }
+    .special-label { font-size: var(--font-size-body); color: var(--text); }
+    .special-note { font-size: var(--font-size-caption); color: var(--text-mute); line-height: 1.5; }
+    .special-body { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+    .special-control { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; width: 100%; }
+    .special-control .input { min-width: 160px; }
+    .special-body .tag-pick { width: 100%; }
+    .special-sub { display: flex; flex-direction: column; gap: 4px; width: 100%; max-width: 320px; }
+    .special-sub .form-label { font-size: var(--font-size-caption); color: var(--text-sub); }
+    .special-sub .form-hint { font-size: var(--font-size-caption); color: var(--text-mute); }
+    @media (max-width: 900px) { .special-row { grid-template-columns: 1fr; } }
+    .baijia-account-block { margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid var(--border-soft); border-left: 3px solid var(--primary); border-radius: var(--radius-md); background: var(--surface-2); }
+    .baijia-account-block + .baijia-account-block { margin-top: var(--space-3); }
+    .baijia-account-title { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-body); font-weight: 500; color: var(--text); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-faint); margin-bottom: var(--space-2); }
+    .baijia-account-title i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); color: var(--primary); }
+    .upload-box.done { border-color: var(--success); background: var(--success-muted, #f0f9f4); }
+    .up-sub { font-size: var(--font-size-caption); color: var(--text-mute); }
+    .drama-info-card { display: flex; gap: var(--space-5); align-items: stretch; }
+    .drama-info-cover { width: 132px; flex-shrink: 0; border-radius: var(--radius-lg); color: #fff; display: flex; flex-direction: column; justify-content: space-between; padding: var(--space-4); min-height: 168px; position: relative; overflow: hidden; }
+    .drama-info-cover::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(0,0,0,.30)); }
+    .drama-info-cover .ci-title { position: relative; z-index: 1; font-weight: 600; font-size: 18px; line-height: 1.4; }
+    .drama-info-cover .ci-sub { position: relative; z-index: 1; font-size: var(--font-size-caption); opacity: .92; }
+    .drama-info-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+    .drama-info-title-row { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+    .drama-info-title { font-size: 20px; font-weight: 600; color: var(--text); margin: 0; }
+    .drama-info-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .drama-info-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--space-3) var(--space-5); }
+    .drama-info-meta .mi { display: flex; flex-direction: column; gap: 2px; }
+    .drama-info-meta .mi-label { font-size: var(--font-size-caption); color: var(--text-mute); }
+    .drama-info-meta .mi-value { font-size: var(--font-size-body); color: var(--text); }
+    .drama-info-synopsis { font-size: var(--font-size-body); color: var(--text-sub); line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    @media (max-width: 640px) { .drama-info-card { flex-direction: column; } .drama-info-cover { width: 100%; min-height: 120px; } }
+    /* 分发记录抽屉：短剧 × 平台对应关系矩阵 */
+    .rec-drawer { width: 980px; max-width: 94vw; }
+    .rec-head-sub { font-size: var(--font-size-caption); color: var(--text-mute); margin-top: 2px; }
+    .rec-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); margin-bottom: var(--space-5); }
+    .rec-stat { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); background: var(--surface-2); }
+    .rec-stat .rs-num { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--text); line-height: 1.1; }
+    .rec-stat .rs-label { font-size: var(--font-size-caption); color: var(--text-mute); margin-top: 2px; }
+    .rec-stat.is-ok { border-color: var(--success-border, #cfe4d9); background: var(--success-bg, #f1f8f4); }
+    .rec-stat.is-ok .rs-num { color: var(--success); }
+    .rec-stat.is-warn { border-color: #f0dfc0; background: #fbf6ec; }
+    .rec-stat.is-warn .rs-num { color: #b8860b; }
+    .rec-plat-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .rec-plat-row { display: flex; align-items: flex-start; gap: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); background: var(--surface); }
+    .rec-plat-row.is-empty { border-style: dashed; border-color: var(--border-faint); background: transparent; }
+    .rec-plat-tag { flex-shrink: 0; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--surface-2); display: flex; align-items: center; justify-content: center; color: var(--text-sub); }
+    .rec-plat-tag i[data-icon] { width: 20px; height: 20px; }
+    .rec-plat-row.is-empty .rec-plat-tag { background: var(--surface-3); color: var(--text-mute); }
+    .rec-plat-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .rec-plat-name { font-weight: 500; color: var(--text); font-size: var(--font-size-body); }
+    .rec-plat-sub { font-size: var(--font-size-caption); color: var(--text-sub); line-height: 1.45; }
+    .rec-plat-sub .rec-k { display: inline-block; min-width: 76px; color: var(--text-mute); font-size: 11px; }
+    .rec-plat-time { font-size: 11px; color: var(--text-mute); margin-top: 2px; }
+    .rec-plat-status { flex-shrink: 0; display: flex; align-items: center; }
+    .rec-empty { border: 1px dashed var(--border); border-radius: var(--radius-md); padding: var(--space-6); text-align: center; color: var(--text-mute); display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
+    .rec-empty i[data-icon] { width: 32px; height: 32px; color: var(--text-mute); }
+    .rec-empty p { font-size: var(--font-size-caption); margin: 0; }
+    @media (max-width: 640px) { .rec-summary { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body data-page="distribute">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧剧库 / <b>一键分发</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">一键分发</h1>
+          <p class="page-desc">选择目标平台，逐平台补填各内容库短剧名称与特有字段，即可一次提交到多个平台。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-md" onclick="openDistRecord()"><i data-icon="clock"></i>分发记录</button>
+        </div>
+      </div>
+
+      <div class="dist-layout">
+        <div class="panel reveal" id="drama-info-panel">
+          <div class="panel-head"><div class="panel-title"><i data-icon="clapperboard"></i>本次分发短剧</div><span class="tag tag-primary" id="drama-info-badge">已选择</span></div>
+          <div class="panel-body" id="drama-info"></div>
+        </div>
+
+        <div class="panel reveal">
+          <div class="panel-head"><div class="panel-title"><i data-icon="send"></i>选择目标平台</div><span class="tag tag-neutral" id="plat-count">已选 0 个</span></div>
+          <div class="panel-body">
+            <div class="platform-chips" id="platform-chips"></div>
+            <div class="alert alert-info" style="margin-top: var(--space-4);"><i data-icon="info"></i><span>勾选多个平台可一次提交；每个平台的上报状态与审核结果分别追踪。</span></div>
+          </div>
+        </div>
+
+        <div id="mapping-area" class="reveal"></div>
+
+        <div class="panel reveal" id="submit-panel">
+          <div class="panel-head"><div class="panel-title"><i data-icon="badge-check"></i>提交分发</div></div>
+          <div class="panel-body" style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-4);">
+            <span class="form-hint" id="submit-hint">请选择至少一个目标平台</span>
+            <button class="btn btn-primary btn-lg" id="submit-btn" onclick="doDistribute()"><i data-icon="send"></i>提交分发</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 分发记录抽屉：短剧剧库 × 各平台分发对应关系 -->
+  <div class="backdrop" id="rec-backdrop" hidden onclick="closeDistRecord()"></div>
+  <div class="drawer rec-drawer" id="rec-drawer" hidden>
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-title">分发记录</div>
+        <div class="rec-head-sub" id="rec-head-sub">当前短剧分发到各平台的情况</div>
+      </div>
+      <button class="btn btn-ghost btn-md" onclick="closeDistRecord()"><i data-icon="x"></i></button>
+    </div>
+    <div class="drawer-body" id="rec-body"></div>
+    <div class="drawer-foot">
+      <span class="form-hint" style="margin-right:auto;">状态标签展示各平台最新流转状态</span>
+      <button class="btn btn-primary btn-md" onclick="closeDistRecord()">关闭</button>
+    </div>
+  </div>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script>
+    var selectedPlatforms = [];
+    var STATE_DIST = { dramaId: '' };
+    var specialState = {
+      'honor:genres': [],
+      'honor-contentAttrs': [],
+      'honor:launchChannels': [],
+      'honor:rankBoards': [],
+      'baijiahao:pay_playlet_sub_category': { level1: '男频', level2: '' }
+    };
+
+    function selectedDrama() {
+      return DB.dramas.find(function (d) { return d.id === STATE_DIST.dramaId; });
+    }
+
+    /* 付费卡点集数默认值：取自短剧基础信息「付费卡点集数」 */
+    function defaultChargeEpisode() {
+      var d = selectedDrama();
+      if (!d || d.chargeEpisode == null) return '';
+      var n = Number(d.chargeEpisode);
+      return n > 0 ? String(n) : '';
+    }
+
+    /* 某平台面板内的「短剧名称」：默认回显所选短剧，可独立编辑。
+       用 hasOwnProperty 区分「未编辑（回览默认）」与「编辑为空（视为必填缺失）」 */
+    function platformDramaTitle(key) {
+      var k = key + ':dramaTitle';
+      var d = selectedDrama();
+      if (Object.prototype.hasOwnProperty.call(specialState, k)) return specialState[k] || '';
+      return d ? d.title : '';
+    }
+
+    function renderDramaInfo() {
+      var box = document.getElementById('drama-info');
+      var badge = document.getElementById('drama-info-badge');
+      var d = selectedDrama();
+      if (!d) {
+        badge.textContent = '未选择';
+        badge.className = 'tag tag-neutral';
+        box.innerHTML = '<div class="alert alert-warning" style="margin:0;"><i data-icon="info"></i><span>未找到待分发的短剧，请返回「短剧剧库」选择要分发的短剧后再进行分发。</span></div>';
+        injectIcons();
+        return;
+      }
+      badge.textContent = '已选择';
+      badge.className = 'tag tag-primary';
+      var tagsHtml = (d.tags || []).map(function (t) { return '<span class="tag tag-primary">' + escHtml(t) + '</span>'; }).join('');
+      var items = [
+        { l: '项目名称/ID', v: d.project || '—' },
+        { l: '内容分类', v: d.shortplayType || '—' },
+        { l: '内容子分类', v: d.category || '—' },
+        { l: '受众定位', v: d.audience || '—' },
+        { l: '总集数', v: d.totalEpisodes ? d.totalEpisodes + ' 集' : '—' },
+        { l: '更新状态', v: d.updateStatus || '—' },
+        { l: '导演', v: d.director || '—' },
+        { l: '制片人', v: d.producer || '—' },
+        { l: '演员', v: d.actors || '—' },
+        { l: '版权方', v: d.copyright || '—' },
+        { l: '制作成本', v: d.productionCost || '—' },
+        { l: '投资额', v: d.investment != null ? d.investment + ' 万元' : '—' }
+      ];
+      var metaHtml = items.map(function (it) {
+        return '<div class="mi"><span class="mi-label">' + escHtml(it.l) + '</span><span class="mi-value">' + escHtml(it.v) + '</span></div>';
+      }).join('');
+      box.innerHTML =
+        '<div class="drama-info-card">' +
+          '<div class="drama-info-cover" style="background:' + escAttr(d.cover || '#14574F') + ';">' +
+            '<span class="ci-title">' + escHtml(d.title) + '</span>' +
+            '<span class="ci-sub">' + escHtml(d.shortplayType || '') + '</span>' +
+          '</div>' +
+          '<div class="drama-info-main">' +
+            '<div class="drama-info-title-row"><h3 class="drama-info-title">' + escHtml(d.title) + '</h3><span class="mono-badge">' + escHtml(d.id) + '</span></div>' +
+            '<div class="drama-info-tags">' + tagsHtml + '</div>' +
+            '<div class="drama-info-meta">' + metaHtml + '</div>' +
+            (d.synopsis ? '<p class="drama-info-synopsis">' + escHtml(d.synopsis) + '</p>' : '') +
+          '</div>' +
+        '</div>';
+      injectIcons();
+    }
+
+    function renderPlatformChips() {
+      var box = document.getElementById('platform-chips');
+      box.innerHTML = PLATFORMS.map(function (p) {
+        return '<div class="platform-chip" data-key="' + p.key + '" onclick="togglePlatform(\'' + p.key + '\')"><i data-icon="circle-check"></i><span>' + p.name + '</span></div>';
+      }).join('');
+      injectIcons();
+    }
+
+    function togglePlatform(key) {
+      var i = selectedPlatforms.indexOf(key);
+      if (i > -1) selectedPlatforms.splice(i, 1); else selectedPlatforms.push(key);
+      var chip = document.querySelector('.platform-chip[data-key="' + key + '"]');
+      if (chip) chip.classList.toggle('sel', i === -1);
+      document.getElementById('plat-count').textContent = '已选 ' + selectedPlatforms.length + ' 个';
+      renderMapping();
+    }
+
+    function escAttr(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+    function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); }
+
+    /* 百家号付费模板：来自账号管理内百家号账号关联的付费模板 */
+    function allBaijiaTemplates() {
+      var list = [];
+      (DB.accounts && DB.accounts.baijiahao || []).forEach(function (a) {
+        (a.templates || []).forEach(function (t) { list.push(t); });
+      });
+      return list;
+    }
+    /* 百家号字段按「账号」隔离存储：key = 'baijiahao' 或 'baijiahao:<账号名>' */
+    function baijiaPayType(key) { return specialState[key + ':pay_type'] || '免费短剧'; }
+    function setBaijiaPayType(key, v) { specialState[key + ':pay_type'] = v; renderMapping(); }
+    function togglePayTpl(key, id, checked) {
+      var arr = specialState[key + ':payTemplates'] || [];
+      var i = arr.indexOf(id);
+      if (checked && i === -1) arr.push(id);
+      else if (!checked && i > -1) arr.splice(i, 1);
+      specialState[key + ':payTemplates'] = arr;
+      if (!checked && specialState[key + ':payTemplateDefault'] === id) specialState[key + ':payTemplateDefault'] = '';
+    }
+    function setPayTplDefault(key, id) { specialState[key + ':payTemplateDefault'] = id; }
+
+    /* 支付宝：内容分类一级（真人 / 动漫 / AI仿真漫剧） */
+    function contentL1(d) {
+      if (!d) return null;
+      var st = d.shortplayType || '';
+      if (st === '真人短剧') return '真人';
+      if (st.indexOf('AI仿真') === 0) return 'AI仿真漫剧';
+      return '动漫';
+    }
+    /* 支付宝：短剧分类（一类/二类/三类）按内容分类 + 投资额自动判定 */
+    function alipayClass(d) {
+      var inv = (d && d.investment != null) ? Number(d.investment) : 0;
+      var l1 = contentL1(d);
+      if (l1 === '真人') {
+        if (inv > 300) return '一类';
+        if (inv >= 100 && inv <= 300) return '二类';
+        return '三类';
+      }
+      if (l1 === '动漫' || l1 === 'AI仿真漫剧') {
+        if (inv >= 80) return '一类';
+        if (inv >= 30 && inv < 80) return '二类';
+        return '三类';
+      }
+      return '三类';
+    }
+    /* 支付宝：生活号账号（账号管理内 type=生活号） */
+    function lifeAccounts() {
+      return (DB.accounts && DB.accounts.alipay || []).filter(function (a) { return a.type === '生活号'; });
+    }
+    function toggleAlipayChannel(name, checked) {
+      var arr = specialState['alipay:channel'] || [];
+      var i = arr.indexOf(name);
+      if (checked && i === -1) arr.push(name);
+      if (!checked && i > -1) arr.splice(i, 1);
+      specialState['alipay:channel'] = arr;
+      renderMapping();
+    }
+
+    /* 荣耀付费类型切换：整部购买 / 按集购买 联动特有字段 */
+    function honorChargeChange(sel) {
+      var key = sel.id.replace('sf-charge-', '');
+      specialState[key + ':charge'] = sel.value;
+      renderMapping();
+    }
+
+    function honorChargeState(el, stateKey, cap) {
+      var digits = el.value.replace(/\D/g, '');
+      if (cap > 0) digits = digits.slice(0, cap);
+      if (stateKey.indexOf(':chargeEp') > -1) {
+        var d = selectedDrama();
+        var total = d && d.totalEpisodes ? Number(d.totalEpisodes) : 0;
+        if (digits !== '' && total) {
+          var n = Number(digits);
+          if (n < 1) n = 1;
+          if (n > total) n = total;
+          digits = String(n);
+        }
+      }
+      el.value = digits;
+      specialState[stateKey] = digits;
+    }
+
+    function honorNumberInput(el, stateKey) {
+      el.value = el.value.replace(/\D/g, '').slice(0, 19);
+      specialState[stateKey] = el.value;
+    }
+
+    /* 确保某平台某字段的派生状态已初始化（标签回显短剧 tags、付费类型给默认值） */
+    function ensureFieldState(key, s) {
+      if (s.control === 'tags') {
+        var tk = key + ':tags';
+        if (!specialState[tk]) {
+          var d = selectedDrama();
+          specialState[tk] = (d && d.tags ? d.tags.filter(function (x) { return ALIPAY_TAGS.indexOf(x) > -1; }) : []);
+        }
+      } else if (s.control === 'charge' || s.control === 'honor-charge' || s.control === 'yinhe-charge' || s.control === 'vivo-charge') {
+        var ck = key + ':charge';
+        if (specialState[ck] == null) specialState[ck] = (s.options && s.options[0]) || '';
+        if (s.control === 'honor-charge' || s.control === 'yinhe-charge' || s.control === 'vivo-charge') {
+          var ek = key + ':chargeEp';
+          if (specialState[ek] == null) specialState[ek] = defaultChargeEpisode();
+        }
+      } else if (s.control === 'yinhe-channel') {
+        var chk = key + ':channel';
+        if (specialState[chk] == null) specialState[chk] = (s.options && s.options[0]) || '';
+      } else if (s.control === 'yinhe-select') {
+        var sk = key + ':' + (s.key || s.label);
+        if (specialState[sk] == null) specialState[sk] = (s.options && s.options[0]) || '';
+      } else if (s.control === 'radio') {
+        var rk = key + ':radio:' + (s.key || s.label);
+        if (specialState[rk] == null) specialState[rk] = s.default || (s.options && s.options[0]) || '';
+      }
+    }
+
+    function specialRow(s, key) {
+      var meta = '<div class="special-meta"><span class="special-label">' + s.label + '</span><span class="special-note">' + s.note + '</span></div>';
+      var tag = '<span class="tag ' + (s.required ? 'tag-warning' : 'tag-neutral') + '">' + (s.required ? '必填' : '选填') + '</span>';
+      ensureFieldState(key, s);
+      if (s.control === 'tags') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="tag-pick" id="sf-tags-' + key + '"></div></div></div>';
+      }
+      if (s.control === 'charge') {
+        var opts = (s.options || []).map(function (o) { return '<option>' + o + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" id="sf-charge-' + key + '" onchange="specialState[\'' + key + ':charge\']=this.value" style="min-width:200px;">' + opts + '</select></div></div>';
+      }
+      if (s.control === 'yinhe-channel') {
+        var ccur = specialState[key + ':channel'] || (s.options && s.options[0]) || '';
+        var copts = (s.options || []).map(function (o) { return '<option' + (o === ccur ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" id="sf-channel-' + key + '" onchange="specialState[\'' + key + ':channel\']=this.value" style="min-width:200px;">' + copts + '</select></div></div>';
+      }
+      if (s.control === 'yinhe-select') {
+        var sKey = key + ':' + (s.key || s.label);
+        var scur = specialState[sKey] || (s.options && s.options[0]) || '';
+        var sopts = (s.options || []).map(function (o) { return '<option' + (o === scur ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" id="sf-sel-' + key + '-' + (s.key || '') + '" onchange="specialState[\'' + sKey + '\']=this.value" style="min-width:200px;">' + sopts + '</select></div></div>';
+      }
+      if (s.control === 'honor-charge') {
+        var hcur = specialState[key + ':charge'] || (s.options && s.options[0]) || '';
+        var hopts = (s.options || []).map(function (o) { return '<option' + (o === hcur ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+        var d = selectedDrama();
+        var totalEp = (d && d.totalEpisodes) ? d.totalEpisodes : 0;
+        var cond = '';
+        if (hcur.indexOf('整部购买') > -1) {
+          cond = '<div class="special-sub"><span class="form-label">整部总价（分）<span class="req">*</span></span>' +
+            '<input class="map-input" type="text" inputmode="numeric" maxlength="10" placeholder="最多 10 位整数" value="' + escAttr(specialState[key + ':totalPrice'] || '') + '" oninput="honorChargeState(this,\'' + key + ':totalPrice\',10)"></div>';
+        } else if (hcur.indexOf('按集购买') > -1) {
+          cond = '<div class="special-sub"><span class="form-label">收费卡点集数<span class="req">*</span></span>' +
+            '<input class="map-input" type="text" inputmode="numeric" placeholder="大于等于 1 且小于等于总集数 ' + totalEp + '" value="' + escAttr(specialState[key + ':chargeEp'] || '') + '" oninput="honorChargeState(this,\'' + key + ':chargeEp\',-1)">' +
+            '<div class="form-hint">收费卡点集数范围 1 ~ ' + totalEp + ' · 从本集开始收费</div></div>' +
+            '<div class="special-sub"><span class="form-label">单集价格（分）<span class="req">*</span></span>' +
+            '<input class="map-input" type="text" inputmode="numeric" maxlength="10" placeholder="最多 10 位整数" value="' + escAttr(specialState[key + ':unitPrice'] || '') + '" oninput="honorChargeState(this,\'' + key + ':unitPrice\',10)"></div>';
+        }
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag +
+          '<select class="input" id="sf-charge-' + key + '" onchange="honorChargeChange(this)" style="min-width:200px;">' + hopts + '</select>' + cond + '</div></div>';
+      }
+      if (s.control === 'yinhe-charge') {
+        var ycur = specialState[key + ':charge'] || (s.options && s.options[0]) || '';
+        var yopts = (s.options || []).map(function (o) { return '<option' + (o === ycur ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+        var d = selectedDrama();
+        var totalEp = (d && d.totalEpisodes) ? d.totalEpisodes : 0;
+        var ycond = '';
+        if (ycur === '付费') {
+          ycond = '<div class="special-sub"><span class="form-label">收费卡点集数<span class="req">*</span></span>' +
+            '<input class="map-input" type="text" inputmode="numeric" placeholder="1 ~ ' + totalEp + '" value="' + escAttr(specialState[key + ':chargeEp'] || '') + '" oninput="honorChargeState(this,\'' + key + ':chargeEp\',-1)">' +
+            '<div class="form-hint">收费卡点集数范围 1 ~ ' + totalEp + ' · 从本集开始收费</div></div>';
+        }
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag +
+          '<select class="input" id="sf-charge-' + key + '" onchange="honorChargeChange(this)" style="min-width:200px;">' + yopts + '</select>' + ycond + '</div></div>';
+      }
+      if (s.control === 'vivo-charge') {
+        var vcur = specialState[key + ':charge'] || (s.default != null ? s.default : (s.options && s.options[0])) || '';
+        var vopts = (s.options || []).map(function (o) { return '<option' + (o === vcur ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+        var d = selectedDrama();
+        var vtotal = (d && d.totalEpisodes) ? d.totalEpisodes : 0;
+        var vcond = '';
+        if (vcur === '按集付费') {
+          vcond = '<div class="special-sub"><span class="form-label">收费卡点集数<span class="req">*</span></span>' +
+            '<input class="map-input" type="text" inputmode="numeric" placeholder="1 ~ ' + vtotal + '" value="' + escAttr(specialState[key + ':chargeEp'] || '') + '" oninput="honorChargeState(this,\'' + key + ':chargeEp\',-1)">' +
+            '<div class="form-hint">收费卡点集数范围 1 ~ ' + vtotal + ' · 从本集开始收费</div></div>';
+        }
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag +
+          '<select class="input" id="sf-charge-' + key + '" onchange="honorChargeChange(this)" style="min-width:200px;">' + vopts + '</select>' + vcond + '</div></div>';
+      }
+      if (s.control === 'radio') {
+        var rStateKey = key + ':radio:' + (s.key || s.label);
+        var radioName = 'sf-radio-' + key + '-' + (s.key || 'f');
+        var refresh = (key === 'oppo' && s.key === 'dramaType') ? 'renderMapping();' : '';
+        var radios = (s.options || []).map(function (o) {
+          var checked = (specialState[rStateKey] === o) ? ' checked' : '';
+          return '<label class="radio-option"><input type="radio" name="' + radioName + '" value="' + escAttr(o) + '"' + checked + ' onchange="specialState[\'' + rStateKey + '\']=this.value;' + refresh + '"><span class="radio-dot"></span>' + o + '</label>';
+        }).join('');
+        var radCond = '';
+        if (key === 'oppo' && s.key === 'dramaType') {
+          var dt = specialState[rStateKey] || s.default || (s.options && s.options[0]) || '普通短剧';
+          if (dt === '快应用短剧') {
+            var jk = key + ':jumpUrl';
+            var jv = specialState[jk] || '';
+            radCond = '<div class="special-sub"><span class="form-label">跳转链接<span class="req">*</span></span>' +
+              '<input class="map-input" type="url" placeholder="请输入跳转链接" value="' + escAttr(jv) + '" oninput="specialState[\'' + jk + '\']=this.value"></div>';
+          }
+        }
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="radio-group">' + radios + '</div>' + radCond + '</div></div>';
+      }
+      if (s.control === 'honor-genres') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="tag-pick" id="sf-genres"></div></div></div>';
+      }
+      if (s.control === 'honor-number') {
+        var nk = key + ':' + (s.key || s.label);
+        var nv = specialState[nk] || '';
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<input class="map-input" type="text" inputmode="numeric" maxlength="19" placeholder="最多 19 位数字" value="' + escAttr(nv) + '" oninput="honorNumberInput(this,\'' + nk + '\')">' +
+          '<div class="form-hint">' + escHtml(s.note) + '</div></div></div>';
+      }
+      if (s.control === 'honor-attrs') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="tag-pick" id="sf-honor-attrs"></div></div></div>';
+      }
+      if (s.control === 'honor-launch-channels') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="tag-pick" id="sf-honor-launch"></div></div></div>';
+      }
+      if (s.control === 'honor-rank-boards') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="tag-pick" id="sf-honor-ranks"></div></div></div>';
+      }
+      if (s.control === 'honor-fengbiao') {
+        var fk = key + ':hasFengBiao';
+        var fcur = specialState[fk] || (s.default != null ? s.default : '否');
+        var fopts = (s.options || []).map(function (o) { return '<option' + (o === fcur ? ' selected' : '') + '>' + o + '</option>'; }).join('');
+        var fcond = '';
+        if (fcur === '是') {
+          var fbk = key + ':fengbiaoNo';
+          fcond = '<div class="special-sub"><span class="form-label">凤标备案号</span>' +
+            '<input class="map-input" type="text" placeholder="请输入凤标备案号" value="' + escAttr(specialState[fbk] || '') + '" oninput="specialState[\'' + fbk + '\']=this.value"></div>';
+        }
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag +
+          '<select class="input" onchange="specialState[\'' + fk + '\']=this.value;renderMapping();" style="min-width:200px;">' + fopts + '</select>' + fcond + '</div></div>';
+      }
+      if (s.control === 'baijia-category') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag +
+          '<div class="special-control"><select class="input" id="bj-level1"><option>男频</option><option>女频</option><option>新增</option></select>' +
+          '<select class="input" id="bj-level2"></select></div></div></div>';
+      }
+      if (s.control === 'alipay-category') {
+        var d0 = selectedDrama();
+        var cls = alipayClass(d0);
+        var l1 = contentL1(d0) || '—';
+        var inv = (d0 && d0.investment != null) ? d0.investment : '—';
+        return '<div class="special-row">' + meta +
+          '<div class="special-body"><span class="tag tag-neutral">自动</span>' +
+          '<div class="input" style="max-width:260px;"><input class="input-control" value="' + escAttr(cls) + '" disabled></div>' +
+          '<div class="form-hint">内容分类「' + l1 + '」· 投资额 ' + inv + ' 万元 · 自动判定为一/二/三类</div></div></div>';
+      }
+      if (s.control === 'baijia-tags') {
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="tag-pick" id="sf-baijia-tags"></div></div></div>';
+      }
+      if (s.control === 'baijia-account') {
+        var bnames = (DB.accounts && DB.accounts.baijiahao || []).map(function (a) { return a.name; });
+        var bak = 'baijiahao:account';
+        if (specialState[bak] == null || bnames.indexOf(specialState[bak]) === -1) specialState[bak] = bnames[0] || '';
+        var bcur = specialState[bak];
+        var bopts = bnames.map(function (n) { return '<option' + (n === bcur ? ' selected' : '') + '>' + escHtml(n) + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" onchange="specialState[\'' + bak + '\']=this.value" style="min-width:200px;">' + bopts + '</select></div></div>';
+      }
+      if (s.control === 'alipay-channel') {
+        var chArr = specialState['alipay:channel'] || [];
+        var chOpts = ['生活号', '商家小程序-麦萌短剧'];
+        var chHtml = chOpts.map(function (c) {
+          var on = chArr.indexOf(c) > -1;
+          return '<label class="check-opt" style="cursor:pointer;margin-right:var(--space-4);"><input type="checkbox"' + (on ? ' checked' : '') + ' onchange="toggleAlipayChannel(\'' + escAttr(c) + '\', this.checked)"><span>' + escHtml(c) + '</span></label>';
+        }).join('');
+        var lifeBox = '';
+        if (chArr.indexOf('生活号') > -1) {
+          var lifeList = lifeAccounts();
+          var lk = 'alipay:lifeAccount';
+          if (specialState[lk] == null || !lifeList.some(function (a) { return a.name === specialState[lk]; })) specialState[lk] = lifeList[0] ? lifeList[0].name : '';
+          var lcur = specialState[lk];
+          var lopts = lifeList.map(function (a) { return '<option' + (a.name === lcur ? ' selected' : '') + '>' + escHtml(a.name) + '</option>'; }).join('');
+          lifeBox = '<div class="special-sub"><span class="form-label">生活号<span class="req">*</span></span><select class="input" onchange="specialState[\'' + lk + '\']=this.value" style="min-width:200px;">' + lopts + '</select></div>';
+        }
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="special-control">' + chHtml + '</div>' + lifeBox + '</div></div>';
+      }
+      if (s.control === 'select') {
+        var sk = key + ':select:' + (s.key || s.label);
+        if (specialState[sk] == null) specialState[sk] = (s.default != null ? s.default : ((s.options && s.options[0]) || ''));
+        var scur = specialState[sk];
+        var sopts = (s.options || []).map(function (o) { return '<option' + (o === scur ? ' selected' : '') + '>' + escHtml(o) + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" onchange="specialState[\'' + sk + '\']=this.value" style="min-width:200px;">' + sopts + '</select></div></div>';
+      }
+      if (s.control === 'sohu-account') {
+        var names = (DB.accounts && DB.accounts.sohu || []).map(function (a) { return a.name; });
+        var ak = 'sohu:account';
+        if (specialState[ak] == null || names.indexOf(specialState[ak]) === -1) specialState[ak] = names[0] || '';
+        var acur = specialState[ak];
+        var aopts = names.map(function (n) { return '<option' + (n === acur ? ' selected' : '') + '>' + escHtml(n) + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" onchange="specialState[\'' + ak + '\']=this.value" style="min-width:200px;">' + aopts + '</select></div></div>';
+      }
+      if (s.control === 'baijia-pay-type') {
+        var ptx = baijiaPayType(key);
+        var popts = (s.options || []).map(function (o) { return '<option' + (o === ptx ? ' selected' : '') + '>' + escHtml(o) + '</option>'; }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<select class="input" data-bj-key="' + escAttr(key) + '" onchange="setBaijiaPayType(this.dataset.bjKey, this.value)" style="min-width:200px;">' + popts + '</select></div></div>';
+      }
+      if (s.control === 'baijia-free-episodes') {
+        if (baijiaPayType(key) === '免费短剧') return '';
+        var d = selectedDrama();
+        var ftotal = d && d.totalEpisodes ? d.totalEpisodes : 0;
+        var fk = key + ':freeEpisodes';
+        var fv = specialState[fk] != null ? specialState[fk] : defaultChargeEpisode();
+        return '<div class="special-row">' + meta +
+          '<div class="special-body"><span class="tag tag-warning">必填</span>' +
+          '<input class="map-input" type="text" inputmode="numeric" placeholder="1 ~ ' + ftotal + '" value="' + escAttr(fv) + '" oninput="honorChargeState(this,\'' + fk + '\',-1)">' +
+          '<div class="form-hint">收费卡点集数范围 1 ~ ' + ftotal + ' · 从本集开始收费</div></div></div>';
+      }
+      if (s.control === 'baijia-pay-templates') {
+        if (baijiaPayType(key) !== '付费短剧') return '';
+        var templates = allBaijiaTemplates();
+        var selIds = specialState[key + ':payTemplates'] || [];
+        var defId = specialState[key + ':payTemplateDefault'] || '';
+        if (!templates.length) {
+          return '<div class="special-row">' + meta +
+            '<div class="special-body"><span class="tag tag-warning">必填</span><span class="form-hint">账号管理中暂无百家号付费模板，请先到「账号管理」配置</span></div></div>';
+        }
+        if (defId && !templates.some(function (t) { return t.templateId === defId; })) defId = '';
+        var radioName = 'pay-tpl-default-' + escAttr(key);
+        var trows = templates.map(function (t) {
+          var checked = selIds.indexOf(t.templateId) > -1;
+          var isDef = defId === t.templateId;
+          return '<div class="tpl-row" style="display:flex;align-items:center;gap:var(--space-3);justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-faint);">' +
+            '<label class="check-opt" style="flex:1;cursor:pointer;"><input type="checkbox"' + (checked ? ' checked' : '') + ' data-bj-key="' + escAttr(key) + '" onchange="togglePayTpl(this.dataset.bjKey, \'' + escAttr(t.templateId) + '\', this.checked)"><span>' + escHtml(t.name) + '<span class="note"> · ' + escHtml(t.templateId) + ' · ' + escHtml(t.playletPayType || '') + '</span></span></label>' +
+            '<label class="radio-option" style="cursor:pointer;flex-shrink:0;"><input type="radio" name="' + radioName + '" value="' + escAttr(t.templateId) + '"' + (isDef ? ' checked' : '') + ' data-bj-key="' + escAttr(key) + '" onchange="setPayTplDefault(this.dataset.bjKey, \'' + escAttr(t.templateId) + '\')"><span class="radio-dot"></span>设为默认</label>' +
+            '</div>';
+        }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body"><span class="tag tag-warning">必填</span><div class="special-control" style="flex-direction:column;align-items:stretch;width:100%;max-width:440px;">' + trows + '</div></div></div>';
+      }
+      if (s.control === 'upload') {
+        var uk = key + ':' + (s.key || s.label);
+        var uploaded = specialState[uk] || '';
+        var boxHtml = uploaded
+          ? '<div class="upload-box done" style="width:100%; max-width:320px; aspect-ratio:4/3" onclick="uploadSpecial(\'' + uk + '\',\'' + escAttr(s.label) + '\')"><i data-icon="file-check"></i><span class="up-text">' + escHtml(uploaded) + '</span><span class="up-sub">点击重新上传</span></div>'
+          : '<div class="upload-box" style="width:100%; max-width:320px; aspect-ratio:4/3" onclick="uploadSpecial(\'' + uk + '\',\'' + escAttr(s.label) + '\')"><i data-icon="file-text"></i><span class="up-text">上传' + escHtml(s.label) + '</span></div>';
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + boxHtml +
+          '<div class="form-hint">支持 PDF / JPG / PNG，单文件 ≤ 10MB</div></div></div>';
+      }
+      if (s.control === 'datetime') {
+        var dk = key + ':' + (s.key || s.label);
+        var dv = specialState[dk] || '';
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag +
+          '<input class="map-input" type="datetime-local" value="' + escAttr(dv) + '" oninput="specialState[\'' + dk + '\']=this.value">' +
+          '<div class="form-hint">' + escHtml(s.note) + '</div></div></div>';
+      }
+      if (s.control === 'text') {
+        var sk = key + ':' + (s.key || s.label);
+        var sv = specialState[sk] || '';
+        var isReq = fieldRequired(s, key);
+        var reqTag = '<span class="tag ' + (isReq ? 'tag-warning' : 'tag-neutral') + '">' + (isReq ? '必填' : '选填') + '</span>';
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + reqTag +
+          '<input class="map-input" type="text" placeholder="' + escAttr(s.note) + '" value="' + escAttr(sv) + '" oninput="specialState[\'' + sk + '\']=this.value">' +
+          (s.condRequired ? '<div class="form-hint">' + escHtml(s.note) + '</div>' : '') + '</div></div>';
+      }
+      if (s.control === 'baijia-multi-account') {
+        var accs = (DB.accounts && DB.accounts.baijiahao || []).map(function (a) { return a.name; });
+        var selAccs = specialState['baijiahao:accounts'];
+        if (!selAccs || !selAccs.length || !selAccs.some(function (n) { return accs.indexOf(n) > -1; })) {
+          selAccs = accs.slice(0, 1);
+          specialState['baijiahao:accounts'] = selAccs;
+        }
+        var accHtml = accs.map(function (n) {
+          var on = selAccs.indexOf(n) > -1;
+          return '<label class="check-opt" style="cursor:pointer;margin-right:var(--space-4);"><input type="checkbox"' + (on ? ' checked' : '') + ' onchange="toggleBaijiaAccount(\'' + escAttr(n) + '\', this.checked)"><span>' + escHtml(n) + '</span></label>';
+        }).join('');
+        return '<div class="special-row">' + meta +
+          '<div class="special-body">' + tag + '<div class="special-control">' + accHtml + '</div>' +
+          '<div class="form-hint">' + escHtml(s.note) + '（每个账号除「标签」外，其余字段单独填写）</div></div></div>';
+      }
+      var defType = (s.type === 'number' || s.type === 'date') ? s.type : 'text';
+      var defExtra = (s.type === 'number') ? ' inputmode="numeric"' : '';
+      return '<div class="special-row">' + meta +
+        '<div class="special-body">' + tag + '<input class="map-input" type="' + defType + '"' + defExtra + ' placeholder="' + escAttr(s.note) + '"></div></div>';
+    }
+
+    function fieldRequired(s, key) {
+      if (s.condRequired === 'baijia-cost30') {
+        var d = selectedDrama();
+        var inv = (d && d.investment != null) ? Number(d.investment) : 0;
+        return inv >= 30;
+      }
+      if (s.condRequired === 'alipay-record') {
+        var d2 = selectedDrama();
+        var inv2 = (d2 && d2.investment != null) ? Number(d2.investment) : 0;
+        var isReal = d2 && d2.shortplayType === '真人短剧';
+        var ch = specialState['alipay:channel'] || [];
+        if (ch.indexOf('商家小程序-麦萌短剧') > -1) return true;
+        if (isReal) return inv2 >= 100;
+        return inv2 >= 30;
+      }
+      return s.required;
+    }
+
+    function toggleBaijiaAccount(name, checked) {
+      var arr = specialState['baijiahao:accounts'] || [];
+      var i = arr.indexOf(name);
+      if (checked && i === -1) arr.push(name);
+      else if (!checked && i > -1) arr.splice(i, 1);
+      specialState['baijiahao:accounts'] = arr;
+      renderMapping();
+    }
+
+    function uploadSpecial(stateKey, label) {
+      specialState[stateKey] = label + '.pdf';
+      renderMapping();
+      toast('已上传 ' + label + '（PDF）');
+    }
+
+    /* 百家号（对象结构）：账号多选 + 标签公用 + 每账号独立字段 */
+    function renderBaijiaSpecial(spec) {
+      var html = '';
+      var count = 0;
+      if (spec.account) {
+        html += specialRow(spec.account, 'baijiahao');
+        count++;
+      }
+      (spec.shared || []).forEach(function (s) {
+        var r = specialRow(s, 'baijiahao');
+        html += r;
+        if (r !== '') count++;
+      });
+      var accounts = specialState['baijiahao:accounts'] || [];
+      accounts.forEach(function (acct) {
+        var acctKey = 'baijiahao:' + acct;
+        var inner = '';
+        (spec.perAccount || []).forEach(function (s) {
+          var r = specialRow(s, acctKey);
+          if (r !== '') { inner += r; count++; }
+        });
+        html += '<div class="baijia-account-block"><div class="baijia-account-title"><i data-icon="user"></i><span>' + escHtml(acct) + '</span><span class="tag tag-primary">独立字段</span></div>' + inner + '</div>';
+      });
+      return { html: html, count: count };
+    }
+
+    function renderMapping() {
+      var area = document.getElementById('mapping-area');
+      if (!selectedPlatforms.length) {
+        area.innerHTML = '<div class="panel"><div class="panel-body"><div class="empty-state"><i data-icon="send"></i><span class="empty-title">选择目标平台后，这里将展示各内容库需要补填的特有字段</span></div></div></div>';
+        injectIcons();
+        updateSubmit();
+        return;
+      }
+      area.innerHTML = selectedPlatforms.map(function (key) {
+        var p = PLATFORMS.find(function (x) { return x.key === key; });
+        var special = PLATFORM_SPECIAL[key] || [];
+        var specialRows, visible;
+        if (key === 'baijiahao' && !Array.isArray(special)) {
+          var b = renderBaijiaSpecial(special);
+          specialRows = b.html;
+          visible = b.count;
+        } else {
+          var rendered = special.map(function (s) { return specialRow(s, key); });
+          specialRows = rendered.join('');
+          visible = rendered.filter(function (r) { return r !== ''; }).length;
+        }
+        return '<div class="panel">' +
+          '<div class="panel-head"><div class="panel-title"><i data-icon="radio"></i>' + p.name + ' 内容库</div>' +
+          '<span class="mono-badge">' + p.flow + '</span></div>' +
+          '<div class="panel-body">' +
+          '<div class="form-field" style="margin-bottom:var(--space-4);">' +
+          '<label class="form-label">短剧名称<span class="req">*</span></label>' +
+          '<input class="input drama-title-input" type="text" data-platform="' + escAttr(key) + '" value="' + escAttr(platformDramaTitle(key)) + '" placeholder="请输入短剧名称" oninput="specialState[this.dataset.platform + \':dramaTitle\']=this.value; updateSubmit()">' +
+          '<div class="form-hint">默认回显所选短剧，可编辑；提交分发时必填</div></div>' +
+          '<div class="section-title">平台特有字段<span class="badge">' + visible + ' 项</span></div>' +
+          '<div class="special-list">' + specialRows + '</div>' +
+          '</div></div>';
+      }).join('');
+      injectIcons();
+      bindSpecialControls();
+      updateSubmit();
+    }
+
+    function bindSpecialControls() {
+      var g = document.getElementById('sf-genres');
+      if (g) makeTagPicker('sf-genres', HONOR_GENRES, specialState['honor:genres'], function () {});
+      var ga = document.getElementById('sf-honor-attrs');
+      if (ga) makeTagPicker('sf-honor-attrs', HONOR_CONTENT_ATTRS, specialState['honor-contentAttrs'], function () {});
+      var lc = document.getElementById('sf-honor-launch');
+      if (lc) makeTagPicker('sf-honor-launch', LAUNCH_CHANNELS, specialState['honor:launchChannels'], function () {});
+      var rk = document.getElementById('sf-honor-ranks');
+      if (rk) makeTagPicker('sf-honor-ranks', RANK_BOARDS, specialState['honor:rankBoards'], function () {});
+      var btag = document.getElementById('sf-baijia-tags');
+      if (btag) {
+        var bd = selectedDrama();
+        var aud = bd && bd.audience ? bd.audience : '男频';
+        var bopts = baijiaTagsForAudience(aud);
+        if (!specialState['baijiahao:tags']) specialState['baijiahao:tags'] = [];
+        makeTagPicker('sf-baijia-tags', bopts, specialState['baijiahao:tags'], function () {});
+      }
+      selectedPlatforms.forEach(function (key) {
+        var t = document.getElementById('sf-tags-' + key);
+        if (t) makeTagPicker('sf-tags-' + key, ALIPAY_TAGS, specialState[key + ':tags'], function () {});
+        var c = document.getElementById('sf-charge-' + key);
+        if (c) c.value = specialState[key + ':charge'] || '';
+      });
+      var l1 = document.getElementById('bj-level1');
+      if (l1) { l1.value = specialState['baijiahao:pay_playlet_sub_category'].level1 || '男频'; updateBjLevel2(); }
+    }
+
+    function updateBjLevel2() {
+      var l1 = document.getElementById('bj-level1').value;
+      var l2 = document.getElementById('bj-level2');
+      specialState['baijiahao:pay_playlet_sub_category'].level1 = l1;
+      var list = BAIJIAO_CATEGORIES[l1] || [];
+      l2.innerHTML = list.map(function (c) { return '<option value="' + c.code + '">' + c.code + '·' + c.name + '</option>'; }).join('');
+      var saved = specialState['baijiahao:pay_playlet_sub_category'].level2;
+      if (saved && list.some(function (c) { return String(c.code) === String(saved); })) l2.value = saved;
+      specialState['baijiahao:pay_playlet_sub_category'].level2 = l2.value;
+    }
+
+    function updateSubmit() {
+      var d = selectedDrama();
+      var hint = document.getElementById('submit-hint');
+      var btn = document.getElementById('submit-btn');
+      if (!selectedPlatforms.length) { hint.textContent = '请先选择至少一个目标平台'; btn.disabled = true; return; }
+      if (!d) { hint.textContent = '未找到待分发的短剧'; btn.disabled = true; return; }
+      var missing = selectedPlatforms.filter(function (k) { return !platformDramaTitle(k); });
+      if (missing.length) {
+        var names = missing.map(function (k) { return PLATFORMS.find(function (p){ return p.key===k; }).name; });
+        hint.textContent = '请补全短剧名称：' + names.join('、');
+        btn.disabled = true; return;
+      }
+      hint.textContent = '将提交到 ' + selectedPlatforms.length + ' 个平台，请确认各内容库特有字段已填写';
+      btn.disabled = false;
+    }
+
+    async function doDistribute() {
+      var d = selectedDrama();
+      var btn = document.getElementById('submit-btn');
+      btn.disabled = true; btn.innerHTML = '<i data-icon="refresh-cw"></i>提交中…';
+      var res = await API.distribute(d.id, selectedPlatforms);
+      btn.disabled = false; btn.innerHTML = '<i data-icon="send"></i>提交分发';
+      toast('已提交 ' + res.data.targets + ' 个平台分发');
+      document.getElementById('mapping-area').insertAdjacentHTML('afterbegin',
+        '<div class="alert alert-success" style="margin-bottom:var(--space-4);"><i data-icon="circle-check"></i><span>分发任务已提交（' + res.data.submittedAt + '），各平台审核结果将通过状态回执更新。</span></div>');
+      injectIcons();
+    }
+
+    function prefillHashPlatform() {
+      var h = location.hash.replace('#', '');
+      if (h && PLATFORMS.some(function (p) { return p.key === h; })) {
+        togglePlatform(h);
+      }
+    }
+
+    /* ===== 分发记录抽屉：当前短剧模板的每一次分发（每次 = 某平台上一部新剧） ===== */
+    function openDistRecord() {
+      renderDistRecord();
+      document.getElementById('rec-backdrop').hidden = false;
+      document.getElementById('rec-drawer').hidden = false;
+      injectIcons(document.getElementById('rec-drawer'));
+    }
+
+    function closeDistRecord() {
+      document.getElementById('rec-backdrop').hidden = true;
+      document.getElementById('rec-drawer').hidden = true;
+    }
+
+    function renderDistRecord() {
+      var box = document.getElementById('rec-body');
+      var d = selectedDrama();
+      var recs = DB.distributionRecords || [];
+
+      /* 当前模板的「每一次分发」，按最近同步倒序；同平台多条 = 多部平台新剧 */
+      var recsFor = recs.filter(function (r) { return r.dramaId === STATE_DIST.dramaId; })
+        .sort(function (a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+
+      var sub = document.getElementById('rec-head-sub');
+      if (sub) {
+        sub.textContent = d
+          ? ('短剧《' + d.title + '》已分发 ' + recsFor.length + ' 次，每次分发在目标平台生成一部新剧')
+          : '当前短剧分发到各平台的情况';
+      }
+
+      var platformsCovered = {};
+      recsFor.forEach(function (r) { platformsCovered[r.platform] = true; });
+      var platformCount = Object.keys(platformsCovered).length;
+
+      var successCount = 0, errorCount = 0, pendingCount = 0;
+      recsFor.forEach(function (r) {
+        var tone = distStatusInfo(r.platform, r.status).tone;
+        if (tone === 'success') successCount++;
+        else if (tone === 'error') errorCount++;
+        else pendingCount++;
+      });
+
+      var summary =
+        '<div class="rec-summary">' +
+          statCard(recsFor.length, '分发次数') +
+          statCard(platformCount, '覆盖平台') +
+          statCard(successCount, '已成功/上线') +
+          statCard(errorCount, '失败') +
+        '</div>';
+
+      if (!recsFor.length) {
+        box.innerHTML = summary +
+          '<div class="rec-empty"><i data-icon="film"></i><p>该短剧尚未分发，可返回下方「选择目标平台」勾选平台后提交分发。</p></div>';
+        injectIcons(box);
+        return;
+      }
+
+      var rows = recsFor.map(function (r) {
+        var p = PLATFORMS.find(function (x) { return x.key === r.platform; }) || { key: r.platform, name: r.platform, tone: '#888' };
+        var info = distStatusInfo(r.platform, r.status);
+        var pTitle = recordPlatformTitle(r);   // 平台侧短剧名称
+        var pRef = recordPlatformRef(r);       // 平台侧外部标识
+        var tplTitle = d ? d.title : r.dramaId;
+        var renamed = (pTitle && pTitle !== tplTitle);
+
+        return '<div class="rec-plat-row">' +
+          '<div class="rec-plat-tag" style="background:' + escAttr(p.tone) + '14; color:' + escAttr(p.tone) + ';">' + escHtml(p.name.slice(0, 1)) + '</div>' +
+          '<div class="rec-plat-main">' +
+            '<div class="rec-plat-name">' + escHtml(p.name) + '</div>' +
+            '<div class="rec-plat-sub"><span class="rec-k">平台短剧名</span>' + escHtml(pTitle || '—') + '</div>' +
+            (renamed ? '<div class="rec-plat-sub"><span class="rec-k">CPS 模板名</span>' + escHtml(tplTitle) + '</div>' : '') +
+            (pRef ? '<div class="rec-plat-sub"><span class="rec-k">平台侧 ID</span>' + escHtml(pRef) + '</div>' : '') +
+            '<div class="rec-plat-time">提交 ' + escHtml(r.submittedAt || '—') + ' · 最近同步 ' + escHtml(r.updatedAt || '—') + '</div>' +
+          '</div>' +
+          '<div class="rec-plat-status"><span class="tag tag-' + info.tone + '">' + escHtml(info.label) + '</span></div>' +
+        '</div>';
+      }).join('');
+
+      box.innerHTML = summary +
+        '<div class="rec-plat-list">' + rows + '</div>';
+
+      injectIcons(box);
+    }
+
+    function statCard(num, label) {
+      var tone = '';
+      if (label === '失败' && num > 0) tone = 'is-warn';
+      if (label === '已成功/上线' && num > 0) tone = 'is-ok';
+      return '<div class="rec-stat ' + tone + '"><div class="rs-num">' + num + '</div><div class="rs-label">' + escHtml(label) + '</div></div>';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var q = new URLSearchParams(location.search).get('id');
+      STATE_DIST.dramaId = q || (DB.dramas[0] && DB.dramas[0].id) || '';
+      renderDramaInfo();
+      renderPlatformChips();
+      renderMapping();
+      prefillHashPlatform();
+      updateSubmit();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>平台备案管理 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 短剧 × 平台 · 备案材料矩阵 */
+    .stat-strip { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-2); }
+    .stat-pill { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); font-size: var(--font-size-body); color: var(--text); }
+    .stat-pill b { font-family: var(--font-mono); font-size: var(--font-size-mono); color: var(--primary); }
+    .stat-pill .lbl { color: var(--text-mute); }
+    .plat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); margin-top: var(--space-2); }
+    .plat-card { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-1); overflow: hidden; }
+    .plat-card.plat-ready { border-left: 3px solid var(--primary); }
+    .plat-card.plat-todo { border-left: 3px solid var(--border); }
+    .plat-card-head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-bottom: 1px dashed var(--border); }
+    .plat-ico { width: 26px; height: 26px; border-radius: 6px; background: var(--primary-soft); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .plat-ico i[data-icon] { width: 15px; height: 15px; }
+    .plat-name { font-family: var(--font-display); font-weight: var(--font-weight-display); font-size: 15px; color: var(--text); letter-spacing: 1px; flex: 1; }
+    .plat-card-body { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3) var(--space-4) var(--space-4); }
+    .plat-material { border: 1px solid var(--border-faint); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); }
+    .plat-material-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+    .plat-material-name { font-weight: var(--font-weight-medium); color: var(--text); font-size: var(--font-size-body); }
+    .doc-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--font-size-body); }
+    .doc-row .k { color: var(--text-mute); flex-shrink: 0; }
+    .doc-row .v { color: var(--text); font-weight: var(--font-weight-medium); text-align: right; }
+    .doc-fill { background: var(--primary-soft); color: var(--primary); border-radius: 6px; padding: 2px 8px; font-weight: var(--font-weight-medium); }
+    .plat-todo-note { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--text-mute); font-size: var(--font-size-caption); line-height: 1.5; padding: var(--space-3); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+    .plat-todo-note i[data-icon] { width: var(--size-icon-md); height: var(--size-icon-md); color: var(--text-mute); flex-shrink: 0; margin-top: 1px; }
+    .plat-regenerate { display: flex; justify-content: flex-end; margin-top: var(--space-1); }
+    .filing-status { text-align: center; }
+    .filing-detail td { background: var(--surface-2); padding: var(--space-4) var(--space-5); }
+    .material-head { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-3); font-size: var(--font-size-caption); color: var(--text-mute); }
+    .material-head i[data-icon] { width: var(--size-icon-md); height: var(--size-icon-md); color: var(--primary); }
+  </style>
+</head>
+<body data-page="filing">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧管理 / <b>平台备案管理</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">平台备案管理</h1>
+          <p class="page-desc">短剧列表内每新增一部短剧，本页即按「短剧 × 平台」自动生成各平台所需的备案材料；材料齐备后，依据规则自动分发到对应平台。</p>
+        </div>
+        <div class="page-actions">
+          <span class="tag tag-primary">短剧 × 平台矩阵</span>
+        </div>
+      </div>
+
+      <div class="alert alert-info reveal"><i data-icon="info"></i><span>当前已落地「支付宝」「抖音小程序」两平台的备案材料规则；其余平台材料规则后续补充。每部短剧对应全部接入平台，已落地平台显示材料字段映射，未落地平台显示「待补充」。</span></div>
+
+      <div class="stat-strip reveal">
+        <span class="stat-pill"><span class="lbl">接入平台</span><b id="stat-plat">11</b></span>
+        <span class="stat-pill"><span class="lbl">已落地材料</span><b id="stat-ready">2</b><span class="lbl">支付宝 · 抖音小程序</span></span>
+        <span class="stat-pill"><span class="lbl">待补充</span><b id="stat-todo" style="color:var(--text-sub);">9</b></span>
+        <span class="stat-pill"><span class="lbl">短剧</span><b id="stat-drama">0</b></span>
+      </div>
+
+      <div class="toolbar reveal">
+        <div class="input">
+          <i data-icon="search"></i>
+          <input class="input-control" id="filing-search" type="text" placeholder="搜索短剧名称 / 短剧ID" oninput="renderFilingList()">
+        </div>
+        <span class="form-hint" id="filing-total">共 0 部短剧</span>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="shield-check"></i>短剧列表</div>
+          <span class="tag tag-success">已落地平台材料自动生成</span>
+        </div>
+        <div class="panel-body">
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="filing-table">
+              <thead>
+                <tr>
+                  <th>短剧</th>
+                  <th>上线 / 首发平台</th>
+                  <th>材料生成状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="sync-note reveal">
+        <i data-icon="info"></i>
+        <span>自动生成与分发规则：短剧列表新增短剧 → 按「短剧 × 平台」生成各平台备案材料 → 已落地平台（支付宝 / 抖音小程序）材料生成完毕 → 依据分发规则自动分发；未落地平台材料待补充，暂停向该平台分发。</span>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script>
+    /* ================= 平台接入清单（后续可逐个落地材料规则） ================= */
+    var FILING_PLATFORMS = [
+      { key: 'wechat',     name: '微信小程序',      ready: false },
+      { key: 'douyin',     name: '抖音小程序',      ready: true },
+      { key: 'tme',        name: 'TME端原生',       ready: false },
+      { key: 'sohu',       name: '搜狐端原生',      ready: false },
+      { key: 'bili',       name: 'B站小程序',       ready: false },
+      { key: 'oppo',       name: 'OPPO端原生',      ready: false },
+      { key: 'baijiahao',  name: '百家号端原生',    ready: false },
+      { key: 'alipay',     name: '支付宝端原生+小程序', ready: true },
+      { key: 'yinhe',      name: '银河端原生',      ready: false },
+      { key: 'honor',      name: '荣耀端原生',      ready: false },
+      { key: 'vivo',       name: 'VIVO端原生',      ready: false }
+    ];
+
+    /* ---- 工具：日期 / 授权期限 / 制作成本 ---- */
+    function padding2(n) { return String(n).padStart(2, '0'); }
+    function fmtDate(d) { return d.getFullYear() + '/' + padding2(d.getMonth() + 1) + '/' + padding2(d.getDate()); }
+    function authPeriod() {
+      var now = new Date();
+      var end = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate() - 1);
+      return fmtDate(now) + '～' + fmtDate(end);
+    }
+    function costInWan(d) {
+      var pc = d.productionCost;
+      if (pc != null) {
+        var m = String(pc).match(/[\d.]+/);
+        if (m) return parseFloat(m[1]);
+      }
+      return (typeof d.investment === 'number') ? d.investment : 0;
+    }
+    function costTier(d) { return costInWan(d) < 30 ? '小于30万' : '大于30万'; }
+    function costDisplay(d) {
+      var pc = d.productionCost;
+      if (pc != null && String(pc).trim() !== '' && String(pc) !== 'null') return String(pc);
+      var n = costInWan(d);
+      return n ? n + '万' : '—';
+    }
+
+    function escHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); });
+    }
+    function uniq(arr) { return arr.filter(function (v, i, a) { return a.indexOf(v) === i; }); }
+
+    /* ---- 生成某短剧 × 某平台的备案材料清单 ---- */
+    function materialsFor(d, key) {
+      if (key === 'alipay') {
+        return [
+          { name: '承诺函', kind: '清单', fields: [
+            ['短剧名称', d.title], ['授权期限', authPeriod()], ['来源版权方', d.copyright || '—'], ['制作费用', costTier(d)]
+          ]},
+          { name: '动态漫委托制作协议', kind: '清单', fields: [
+            ['剧集名称', d.title], ['集数', (d.totalEpisodes || 0) + ' 集'], ['单集时长', d.avgDuration || '—'],
+            ['总时长', d.totalDuration != null ? d.totalDuration + ' 分钟' : '—'], ['形式', d.orientation === '横屏' ? '横屏' : '竖屏']
+          ]}
+        ];
+      }
+      if (key === 'douyin') {
+        return [
+          { name: '承诺书', kind: '图片', fields: [
+            ['短剧名称', d.title]
+          ]},
+          { name: '成本配置比例', kind: '图片', fields: [
+            ['短剧名称', d.title], ['总集数', (d.totalEpisodes || 0) + ' 集'], ['制作成本', costDisplay(d)]
+          ]}
+        ];
+      }
+      return [];
+    }
+
+    var HIGHLIGHT = { '短剧名称': true, '剧集名称': true };
+
+    function materialRowsHtml(m) {
+      return m.fields.map(function (f) {
+        var hl = HIGHLIGHT[f[0]] ? ' doc-fill' : '';
+        return '<div class="doc-row"><span class="k">' + escHtml(f[0]) + '</span><span class="v' + hl + '">' + escHtml(f[1]) + '</span></div>';
+      }).join('');
+    }
+
+    function materialHtml(m) {
+      return '<div class="plat-material">' +
+        '<div class="plat-material-head"><span class="plat-material-name">' + escHtml(m.name) + '</span><span class="tag tag-neutral">' + escHtml(m.kind) + '</span></div>' +
+        materialRowsHtml(m) +
+        '<div class="plat-material-foot" style="display:flex;justify-content:flex-end;gap:var(--space-2);">' +
+          '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：预览' + escHtml(m.name) + '\')"><i data-icon="eye"></i>预览</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：下载' + escHtml(m.name) + '\')"><i data-icon="download"></i>下载</button>' +
+        '</div></div>';
+    }
+
+    function platformCardHtml(plat, d) {
+      var ms = materialsFor(d, plat.key);
+      if (plat.ready && ms.length) {
+        return '<div class="plat-card plat-ready">' +
+          '<div class="plat-card-head"><span class="plat-ico"><i data-icon="shield-check"></i></span><span class="plat-name">' + escHtml(plat.name) + '</span><span class="tag tag-success">材料已生成</span></div>' +
+          '<div class="plat-card-body">' + ms.map(materialHtml).join('') +
+            '<div class="plat-regenerate"><button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：重新生成' + escHtml(plat.name) + '备案材料\')"><i data-icon="sparkles"></i>重新生成</button></div>' +
+          '</div>' +
+        '</div>';
+      }
+      return '<div class="plat-card plat-todo">' +
+        '<div class="plat-card-head"><span class="plat-ico"><i data-icon="file-text"></i></span><span class="plat-name">' + escHtml(plat.name) + '</span><span class="tag tag-neutral">待补充</span></div>' +
+        '<div class="plat-card-body"><div class="plat-todo-note"><i data-icon="info"></i><span>该平台备案材料规则尚未落地，后续接入后按短剧信息自动生成。</span></div>' +
+          '<div class="plat-regenerate"><button class="btn btn-ghost btn-sm" disabled><i data-icon="sparkles"></i>重新生成</button></div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function detailHtml(d) {
+      var header = '<div class="material-head"><i data-icon="layers"></i><span>' + escHtml(d.title) + ' · 接入平台备案材料矩阵（' + FILING_PLATFORMS.length + ' 个平台）</span></div>';
+      var grid = '<div class="plat-grid">' + FILING_PLATFORMS.map(function (p) { return platformCardHtml(p, d); }).join('') + '</div>';
+      return header + grid;
+    }
+
+    function allPlatforms(d) { return uniq((d.launchPlatforms || []).concat(d.debutPlatforms || [])); }
+
+    function platformTagsHtml(d) {
+      var ps = allPlatforms(d);
+      if (!ps.length) return '<span class="tag tag-neutral">—</span>';
+      var html = ps.slice(0, 3).map(function (p) { return '<span class="tag tag-primary">' + escHtml(p) + '</span>'; }).join(' ');
+      if (ps.length > 3) html += ' <span class="tag tag-neutral">+' + (ps.length - 3) + '</span>';
+      return html;
+    }
+
+    function statusCellHtml(d) {
+      var ready = FILING_PLATFORMS.filter(function (p) { return p.ready; });
+      var todo = FILING_PLATFORMS.filter(function (p) { return !p.ready; });
+      var readyHtml = ready.map(function (p) { return '<span class="tag tag-success">' + escHtml(p.name) + ' ' + materialsFor(d, p.key).length + ' 份</span>'; }).join(' ');
+      var todoHtml = '<span class="tag tag-neutral">待补充 ' + todo.length + ' 平台</span>';
+      return readyHtml + ' ' + todoHtml;
+    }
+
+    function filingRowHtml(d) {
+      var sid = String(d.id).replace(/[^a-zA-Z0-9]/g, '_');
+      return '<tr>' +
+        '<td><div class="cell-with-poster"><span class="poster-thumb">' + escHtml(String(d.title).charAt(0)) + '</span><div class="cell-stack"><span class="cell-title">' + escHtml(d.title) + '</span><span class="cell-sub mono-badge">' + escHtml(d.id) + ' · ' + escHtml(d.project || '—') + '</span></div></div></td>' +
+        '<td>' + platformTagsHtml(d) + '</td>' +
+        '<td>' + statusCellHtml(d) + '</td>' +
+        '<td><button class="btn btn-ghost btn-sm" onclick="toggleDetail(\'' + sid + '\', this)">查看材料</button></td>' +
+      '</tr>' +
+      '<tr class="filing-detail" id="detail-' + sid + '" style="display:none;"><td colspan="4">' + detailHtml(d) + '</td></tr>';
+    }
+
+    function toggleDetail(id, btn) {
+      var el = document.getElementById('detail-' + id);
+      if (!el) return;
+      var shown = el.style.display !== 'none';
+      el.style.display = shown ? 'none' : 'table-row';
+      if (btn) btn.textContent = shown ? '查看材料' : '收起材料';
+      if (!shown) injectIcons(el);
+    }
+
+    function renderFilingList() {
+      var kw = (document.getElementById('filing-search').value || '').trim().toLowerCase();
+      var list = (DB.dramas || []).filter(function (d) {
+        if (!kw) return true;
+        return (d.title && d.title.toLowerCase().indexOf(kw) > -1) || (d.id && d.id.toLowerCase().indexOf(kw) > -1);
+      });
+      document.getElementById('stat-plat').textContent = FILING_PLATFORMS.length;
+      document.getElementById('stat-ready').textContent = FILING_PLATFORMS.filter(function (p) { return p.ready; }).length;
+      document.getElementById('stat-todo').textContent = FILING_PLATFORMS.filter(function (p) { return !p.ready; }).length;
+      document.getElementById('stat-drama').textContent = (DB.dramas || []).length;
+      document.getElementById('filing-total').textContent = '共 ' + list.length + ' 部短剧';
+      var tb = document.querySelector('#filing-table tbody');
+      if (!list.length) {
+        tb.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i data-icon="search"></i><div class="empty-title">未找到匹配的短剧</div></div></td></tr>';
+      } else {
+        tb.innerHTML = list.map(filingRowHtml).join('');
+      }
+      injectIcons(tb);
+    }
+
+    document.addEventListener('DOMContentLoaded', renderFilingList);
+  </script>
+</body>
+</html>

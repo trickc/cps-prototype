@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增剧集 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .batch-layout { display: grid; grid-template-columns: 340px 1fr; gap: var(--space-6); align-items: start; }
+    .upload-drop { width: 100%; min-height: 120px; }
+    .batch-input { width: 100%; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--font-size-body); color: var(--text); font-family: var(--font-body); background: var(--surface); }
+    .batch-input:focus { outline: none; border-color: var(--primary); }
+    .batch-input.num { text-align: center; }
+    .seq-ok { color: var(--status-success); font-weight: 500; }
+    .seq-warn { color: var(--status-warning); font-weight: 500; }
+    @media (max-width: 900px) { .batch-layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-page="episode-add">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧剧库 / 剧集管理 / <b>新增剧集</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">新增剧集</h1>
+          <p class="page-desc">先填公共信息，再批量上传视频；文件名以「第n集」结尾时自动识别集数。剧集作为媒资进入系统剧集池，之后在短剧的「关联剧集」步骤绑定并设置标题。</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn btn-ghost btn-md" href="episodes.html"><i data-icon="arrow-left"></i>返回剧集管理</a>
+        </div>
+      </div>
+
+      <div class="batch-layout">
+        <div>
+          <div class="panel reveal">
+            <div class="panel-head"><div class="panel-title"><i data-icon="info"></i>公共信息</div><span class="tag tag-primary">批量统一继承</span></div>
+            <div class="panel-body">
+              <div class="form-grid" style="grid-template-columns:1fr;">
+                <div class="form-field">
+                  <label class="form-label">横 / 竖版<span class="req">*</span></label>
+                  <select class="input" id="f-orientation"><option>竖视频</option><option>横视频</option></select>
+                </div>
+                <div class="form-field">
+                  <label class="form-label">视频状态<span class="req">*</span></label>
+                  <select class="input" id="f-video-status"><option value="启用">启用</option><option value="禁用">禁用</option></select>
+                  <div class="form-hint">对应「剧集管理」页的视频状态，默认启用</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel reveal">
+            <div class="panel-head"><div class="panel-title"><i data-icon="cloud-upload"></i>批量上传视频</div><span class="tag tag-neutral" id="batch-count">已添加 0 集</span></div>
+            <div class="panel-body">
+              <div class="upload-box upload-drop" onclick="document.getElementById('file-input').click()">
+                <i data-icon="cloud-upload"></i>
+                <span class="up-text">点击选择多个视频文件（或拖拽到此，支持 mp4 / mov）</span>
+                <span class="form-hint">文件名以「第n集」结尾时自动识别集数</span>
+              </div>
+              <input type="file" id="file-input" multiple accept="video/*" style="display:none" onchange="handleFiles(this.files)">
+              <div class="toolbar" style="margin-top: var(--space-4); margin-bottom:0;">
+                <button class="btn btn-secondary btn-md" onclick="loadDemoFiles()"><i data-icon="sparkles"></i>载入示例文件</button>
+                <span class="spacer"></span>
+                <span class="form-hint">文件名以「第n集」结尾时自动识别集数</span>
+              </div>
+
+              <div style="overflow-x:auto; margin-top: var(--space-4);">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>视频文件</th>
+                      <th>时长</th>
+                      <th>大小</th>
+                      <th style="text-align:right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batch-tbody">
+                    <tr><td colspan="4"><div class="empty-state"><i data-icon="cloud-upload"></i><span class="empty-title">尚未添加视频文件</span></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="alert alert-info" style="margin-top: var(--space-4);"><i data-icon="info"></i><span>提交后，上表剧集将统一继承左侧公共信息，并进入系统剧集池（未关联），之后可在某短剧的「关联剧集」步骤绑定并设置标题。</span></div>
+
+              <div style="display:flex; justify-content:flex-end; gap:var(--space-3); margin-top: var(--space-4);">
+                <button class="btn btn-primary btn-lg" id="submit-btn" onclick="submitEpisodes()"><i data-icon="send"></i>提交全部剧集</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script>
+    var batch = [];
+    var _key = 0;
+
+    /* 从文件名提取「第n集」的 n；无法识别返回 null */
+    function parseEpisodeNo(name) {
+      var base = String(name).replace(/\.[^.]+$/, '');
+      var m = base.match(/第(\d+)\s*集$/);
+      return m ? Number(m[1]) : null;
+    }
+
+    function formatSize(bytes) {
+      if (bytes == null) return '—';
+      if (bytes < 1024) return bytes + 'B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+      return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+    }
+
+    function renderBatch() {
+      var tb = document.getElementById('batch-tbody');
+      document.getElementById('batch-count').textContent = '已添加 ' + batch.length + ' 集';
+      if (!batch.length) {
+        tb.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i data-icon="cloud-upload"></i><span class="empty-title">尚未添加视频文件</span></div></td></tr>';
+        injectIcons();
+        return;
+      }
+      tb.innerHTML = batch.map(function (b) {
+        return '<tr data-key="' + b.key + '">' +
+          '<td><div class="cell-stack"><span class="cell-title">' + b.fileName + '</span><span class="cell-sub">' + (b.fileName.split('.').pop() || '') + '</span></div></td>' +
+          '<td class="num">' + b.duration + '</td>' +
+          '<td class="num">' + b.size + '</td>' +
+          '<td style="text-align:right"><a class="link-action danger" onclick="removeRow(' + b.key + ')">删除</a></td>' +
+          '</tr>';
+      }).join('');
+      injectIcons();
+    }
+
+    function removeRow(key) {
+      batch = batch.filter(function (x) { return x.key !== key; });
+      renderBatch();
+    }
+
+    function addFiles(files) {
+      [].forEach.call(files, function (f) {
+        var name = f.name;
+        var seq = parseEpisodeNo(name);
+        var sz = formatSize(f.size);
+        batch.push({
+          key: _key++,
+          fileName: name,
+          seq: seq,
+          duration: seq != null ? '2:' + (30 + (seq % 30)) : '待解析',
+          size: sz === '—' ? '待解析' : sz
+        });
+      });
+      // 去重：相同 seq 提醒
+      renderBatch();
+      var dup = detectDupSeq();
+      if (dup.length) toast('存在重复集数：第 ' + dup.join('、') + ' 集');
+    }
+
+    function detectDupSeq() {
+      var map = {}, dup = [];
+      batch.forEach(function (b) {
+        if (b.seq == null) return;
+        if (map[b.seq]) dup.push(b.seq);
+        map[b.seq] = true;
+      });
+      return dup;
+    }
+
+    function handleFiles(files) {
+      if (!files || !files.length) return;
+      addFiles(files);
+      document.getElementById('file-input').value = '';
+    }
+
+    function loadDemoFiles() {
+      var name = '示例短剧';
+      addFiles([
+        { name: name + '-第1集.mp4', size: 28400000 },
+        { name: name + '-第2集.mp4', size: 27900000 },
+        { name: name + '-第3集.mp4', size: 29100000 },
+        { name: name + '-宣传片.mp4', size: 15000000 }
+      ]);
+    }
+
+    function parseDur(s) {
+      if (typeof s !== 'string') return 150;
+      var m = s.match(/(\d+):(\d+)/);
+      if (m) return Number(m[1]) * 60 + Number(m[2]);
+      return 150;
+    }
+
+    async function submitEpisodes() {
+      if (!batch.length) { toast('请先添加视频文件'); return; }
+      var orientation = document.getElementById('f-orientation').value;
+      var videoStatus = document.getElementById('f-video-status').value;
+      var covers = ['#CFE0DA', '#E8D5B5', '#CBD6DF', '#E6D2C0', '#D9E4E0'];
+      var btn = document.getElementById('submit-btn');
+      btn.disabled = true; btn.innerHTML = '<i data-icon="refresh-cw"></i>提交中…';
+      var added = 0;
+      batch.forEach(function (b) {
+        DB.episodes.push({
+          id: 'ENEW' + (1000 + b.key),
+          seq: b.seq != null ? b.seq : (DB.episodes.length + 1 + added),
+          cover: covers[added % covers.length],
+          fileName: b.fileName,
+          duration: parseDur(b.duration),
+          size: (!b.size || b.size === '待解析' || b.size === '—') ? '—' : b.size,
+          width: orientation === '竖视频' ? 720 : 1280,
+          height: orientation === '竖视频' ? 1280 : 720,
+          definition: '1080P',
+          orientation: orientation,
+          charge: false,
+          transcode: '执行中',
+          videoStatus: videoStatus
+        });
+        added++;
+      });
+      btn.disabled = false; btn.innerHTML = '<i data-icon="send"></i>提交全部剧集';
+      toast('已新增 ' + added + ' 集（' + orientation + ' · ' + videoStatus + '）');
+      setTimeout(function () { window.location.href = 'episodes.html'; }, 900);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      renderBatch();
+    });
+  </script>
+</body>
+</html>

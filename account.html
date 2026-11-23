@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>账号管理 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="account">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">内容中台 / <b>账号管理</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">账号管理</h1>
+          <p class="page-desc">维护各内容库的授权账号；百家号账号还需配置付费模板，用于按现金/剧豆方式付费。</p>
+        </div>
+      </div>
+
+      <div class="stat-grid reveal" id="stat-grid"></div>
+
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title" id="list-title"><i data-icon="globe"></i>支付宝账号</div>
+          <div style="display:flex;align-items:center;gap:var(--space-3);">
+            <span class="tag tag-neutral" id="account-count">共 0 个</span>
+            <button class="btn btn-primary btn-md" id="add-btn"><i data-icon="plus"></i>新增账号</button>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead id="account-thead"></thead>
+            <tbody id="account-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 新增/编辑账号抽屉 -->
+  <div class="backdrop" id="backdrop" hidden onclick="closeAccountDrawer()"></div>
+  <div class="drawer" id="account-drawer" hidden>
+    <div class="drawer-head">
+      <div class="drawer-title" id="drawer-title">新增账号</div>
+      <button class="icon-btn" onclick="closeAccountDrawer()"><i data-icon="x"></i></button>
+    </div>
+    <div class="drawer-body">
+      <div class="form-grid" id="account-form"></div>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn btn-secondary" onclick="closeAccountDrawer()">取消</button>
+      <button class="btn btn-primary" onclick="saveAccount()"><i data-icon="check"></i>保存</button>
+    </div>
+  </div>
+
+  <!-- 百家号付费模板配置抽屉 -->
+  <div class="backdrop" id="tpl-backdrop" hidden onclick="closeTplDrawer()"></div>
+  <div class="drawer" id="tpl-drawer" hidden>
+    <div class="drawer-head">
+      <div class="drawer-title">付费模板配置</div>
+      <button class="icon-btn" onclick="closeTplDrawer()"><i data-icon="x"></i></button>
+    </div>
+    <div class="drawer-body">
+      <div class="alert alert-info"><i data-icon="info"></i>按「现金」或「剧豆」的付费模板下发到百家号；可配置多个模板，账号可整体启用/禁用付费。</div>
+      <div class="form-field" style="margin-bottom: var(--space-4);">
+        <label class="form-label">是否启用付费模板</label>
+        <div class="radio-group">
+          <label class="radio-option"><input type="radio" name="tpl-enabled" value="1" checked><span class="radio-dot"></span>启用</label>
+          <label class="radio-option"><input type="radio" name="tpl-enabled" value="0"><span class="radio-dot"></span>禁用</label>
+        </div>
+      </div>
+      <div class="section-title" style="margin-bottom: var(--space-3);">付费模板列表</div>
+      <div id="tpl-list"></div>
+      <button class="btn btn-ghost btn-md" style="margin-top: var(--space-4);" onclick="addTpl()"><i data-icon="plus"></i>添加付费模板</button>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn btn-secondary" onclick="closeTplDrawer()">取消</button>
+      <button class="btn btn-primary" onclick="saveTpl()"><i data-icon="check"></i>保存</button>
+    </div>
+  </div>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script>
+    /* ---------- 工具 ---------- */
+    function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); }
+    function escAttr(s) { return escHtml(s); }
+    function nowStr() { var d = new Date(); var p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+    function today() { var d = new Date(); var p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+    function maskSecret(s) { s = String(s); if (s.length <= 8) return s.substr(0, 2) + '…' + s.substr(-2); return s.substr(0, 6) + '…' + s.substr(-4); }
+
+    var TPL_ENABLED = { alipay: 'AL', sohu: 'SH', baijiahao: 'BJ' };
+
+    /* ---------- 平台元数据 ---------- */
+    var META = {
+      alipay: {
+        icon: 'globe', title: '支付宝账号', addLabel: '新增账号', drawerAdd: '新增账号', drawerEdit: '编辑账号',
+        desc: '支付宝账号，含商家小程序与生活号两种类型。',
+        fields: [
+          { key: 'name', label: '账号名称', required: true, ph: '请输入账号名称' },
+          { key: 'type', label: '账号类型', required: true, control: 'radio', opts: ['商家小程序', '生活号'], default: '生活号', disabled: true },
+          { key: 'appid', label: 'APPID', required: true, ph: '请输入开放平台 APPID' },
+          { key: 'lifeId', label: '生活号ID', required: false, ph: '请输入生活号ID' },
+          { key: 'status', label: '账号状态', required: true, control: 'select', opts: ['启用', '禁用'] }
+        ]
+      },
+      sohu: {
+        icon: 'film', title: '搜狐账号管理', addLabel: '新增搜狐账号', drawerAdd: '新增搜狐账号', drawerEdit: '编辑搜狐账号',
+        desc: '搜狐视频账号，含 passport（邮箱格式）授权。',
+        fields: [
+          { key: 'status', label: '账号状态', required: true, control: 'select', opts: ['启用', '禁用'] },
+          { key: 'name', label: '账号名称', required: true, ph: '请输入账号名称' },
+          { key: 'uid', label: '账号UID', required: true, ph: '请输入UID' },
+          { key: 'passport', label: 'passport', required: true, control: 'email', ph: '搜狐视频passport（邮箱格式）' }
+        ]
+      },
+      baijiahao: {
+        icon: 'send', title: '百家号管理', addLabel: '添加百家号', drawerAdd: '添加百家号', drawerEdit: '编辑百家号',
+        desc: '百家号账号，授权后还需配置付费模板。',
+        fields: [
+          { key: 'name', label: '账号名称', required: true, ph: '请输入账号名称' },
+          { key: 'accountId', label: '账号ID', required: true, ph: '请输入百家号账号ID' },
+          { key: 'secret', label: '授权密钥', required: true, ph: '请输入授权密钥' },
+          { key: 'status', label: '账号状态', required: true, control: 'select', opts: ['启用', '禁用'] }
+        ]
+      }
+    };
+
+    var STATE = { platform: 'alipay', editingId: null, tplAccountId: null, tplDraft: [] };
+
+    /* ---------- 渲染 ---------- */
+    function accounts() { return DB.accounts[STATE.platform] || []; }
+
+    function statusTag(s) {
+      var on = s === '启用' || s === '已登录' || s === '成功' || s === '已启用';
+      var cls = on ? 'tag-success' : (s === '禁用' || s === '未登录' ? 'tag-error' : 'tag-neutral');
+      return '<span class="tag ' + cls + '">' + escHtml(s) + '</span>';
+    }
+
+    function renderStats() {
+      var items = [
+        { key: 'alipay', label: '支付宝账号', icon: 'globe' },
+        { key: 'sohu', label: '搜狐账号', icon: 'film' },
+        { key: 'baijiahao', label: '百家号账号', icon: 'send' }
+      ];
+      document.getElementById('stat-grid').innerHTML = items.map(function (it) {
+        var n = (DB.accounts[it.key] || []).length;
+        return '<div class="stat-card" style="cursor:pointer" onclick="switchPlatform(\'' + it.key + '\')">' +
+          '<div class="stat-label"><i data-icon="' + it.icon + '"></i>' + it.label + '</div>' +
+          '<div class="stat-value">' + n + '</div>' +
+          '<div class="stat-foot">' + (it.key === 'baijiahao' ? '支持付费模板配置' : '已授权账号') + '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function switchPlatform(p) {
+      STATE.platform = p;
+      STATE.editingId = null;
+      document.querySelectorAll('[data-platform-tab]').forEach(function (el) {
+        el.classList.toggle('sel', el.getAttribute('data-platform-tab') === p);
+      });
+      var meta = META[p];
+      document.getElementById('list-title').innerHTML = '<i data-icon="' + meta.icon + '"></i>' + meta.title;
+      document.getElementById('add-btn').innerHTML = '<i data-icon="plus"></i>' + meta.addLabel;
+      renderList();
+    }
+
+    function renderList() {
+      var meta = META[STATE.platform];
+      var list = accounts();
+      var headHtml, rowsHtml;
+
+      if (STATE.platform === 'alipay') {
+        headHtml = '<tr><th>账号名称</th><th>账号类型</th><th>APPID</th><th>生活号ID</th><th>账号状态</th><th>新增时间</th><th style="text-align:right">操作</th></tr>';
+        rowsHtml = list.map(function (a) {
+          return '<tr>' +
+            '<td><div class="cell-title">' + escHtml(a.name) + '</div></td>' +
+            '<td>' + escHtml(a.type) + '</td>' +
+            '<td><span class="mono-badge">' + escHtml(a.appid) + '</span></td>' +
+            '<td>' + (a.lifeId ? '<span class="mono-badge">' + escHtml(a.lifeId) + '</span>' : '—') + '</td>' +
+            '<td>' + statusTag(a.status) + '</td>' +
+            '<td>' + escHtml(a.createdAt) + '</td>' +
+            '<td style="text-align:right"><span class="link-action" onclick="openEdit(\'' + a.id + '\')">编辑</span></td>' +
+            '</tr>';
+        }).join('');
+      } else if (STATE.platform === 'sohu') {
+        headHtml = '<tr><th>账号名称</th><th>UID</th><th>passport</th><th>账号状态</th><th>新增时间</th><th style="text-align:right">操作</th></tr>';
+        rowsHtml = list.map(function (a) {
+          return '<tr>' +
+            '<td><div class="cell-title">' + escHtml(a.name) + '</div></td>' +
+            '<td><span class="mono-badge">' + escHtml(a.uid) + '</span></td>' +
+            '<td><span class="mono-badge">' + escHtml(a.passport) + '</span></td>' +
+            '<td>' + statusTag(a.status) + '</td>' +
+            '<td>' + escHtml(a.createdAt) + '</td>' +
+            '<td style="text-align:right"><span class="link-action" onclick="openEdit(\'' + a.id + '\')">编辑</span></td>' +
+            '</tr>';
+        }).join('');
+      } else {
+        headHtml = '<tr><th>账号名称</th><th>账号ID</th><th>授权密钥</th><th>账号状态</th><th>付费模板配置</th><th>新增时间</th><th style="text-align:right">操作</th></tr>';
+        rowsHtml = list.map(function (a) {
+          var tplTag = a.templateEnabled ? '<span class="tag tag-success">已启用</span>' : '<span class="tag tag-neutral">禁用</span>';
+          return '<tr>' +
+            '<td><div class="cell-title">' + escHtml(a.name) + '</div></td>' +
+            '<td><span class="mono-badge">' + escHtml(a.accountId) + '</span></td>' +
+            '<td><span class="mono-badge">' + escHtml(maskSecret(a.secret)) + '</span></td>' +
+            '<td>' + statusTag(a.status) + '</td>' +
+            '<td>' + tplTag + '</td>' +
+            '<td>' + escHtml(a.createdAt) + '</td>' +
+            '<td style="text-align:right"><span class="link-action" onclick="openTplDrawer(\'' + a.id + '\')">付费模板</span><span class="link-action" onclick="openEdit(\'' + a.id + '\')">编辑</span></td>' +
+            '</tr>';
+        }).join('');
+      }
+
+      document.getElementById('account-thead').innerHTML = headHtml;
+      document.getElementById('account-tbody').innerHTML = rowsHtml || '<tr><td colspan="' + (STATE.platform === 'sohu' ? 6 : 7) + '"><div class="empty-state"><i data-icon="users"></i><div class="empty-title">暂无账号，点击「' + META[STATE.platform].addLabel + '」开始</div></div></td></tr>';
+      document.getElementById('account-count').textContent = '共 ' + list.length + ' 个';
+      injectIcons();
+    }
+
+    /* ---------- 账号表单调出 ---------- */
+    function openAccountDrawer() { document.getElementById('backdrop').hidden = false; document.getElementById('account-drawer').hidden = false; }
+    function closeAccountDrawer() { document.getElementById('backdrop').hidden = true; document.getElementById('account-drawer').hidden = true; STATE.editingId = null; }
+
+    function openAdd() {
+      STATE.editingId = null;
+      document.getElementById('drawer-title').textContent = META[STATE.platform].drawerAdd;
+      document.getElementById('account-form').innerHTML = META[STATE.platform].fields.map(function (f) { return fieldHtml(f, null); }).join('');
+      injectIcons();
+      updateLifeIdRequired();
+      openAccountDrawer();
+    }
+
+    function openEdit(id) {
+      STATE.editingId = id;
+      var a = accounts().find(function (x) { return x.id === id; });
+      document.getElementById('drawer-title').textContent = META[STATE.platform].drawerEdit;
+      document.getElementById('account-form').innerHTML = META[STATE.platform].fields.map(function (f) { return fieldHtml(f, a[f.key]); }).join('');
+      injectIcons();
+      updateLifeIdRequired();
+      openAccountDrawer();
+    }
+
+    function fieldHtml(f, val) {
+      var req = f.required ? '<span class="req">*</span>' : '';
+      var inner;
+      if (f.control === 'select') {
+        var opts = f.opts.map(function (o) {
+          var cur = (val == null ? f.opts[0] : val);
+          return '<option' + (o === cur ? ' selected' : '') + '>' + escHtml(o) + '</option>';
+        }).join('');
+        inner = '<div class="input"><select class="input-control" id="f-' + f.key + '">' + opts + '</select></div>';
+      } else if (f.control === 'radio') {
+        var cur = (val == null) ? (f.default || f.opts[0]) : val;
+        inner = '<div class="radio-group">' + f.opts.map(function (o) {
+          var dis = f.disabled ? ' disabled' : '';
+          return '<label class="radio-option"><input type="radio" name="f-' + f.key + '" value="' + escAttr(o) + '"' + (o === cur ? ' checked' : '') + dis + ' onchange="updateLifeIdRequired()"><span class="radio-dot"></span>' + escHtml(o) + '</label>';
+        }).join('') + '</div>';
+      } else {
+        var type = f.control === 'email' ? 'email' : 'text';
+        inner = '<div class="input"><input class="input-control" id="f-' + f.key + '" type="' + type + '" placeholder="' + escAttr(f.ph || '') + '" value="' + escAttr(val || '') + '"></div>';
+      }
+      return '<div class="form-field" data-field="' + f.key + '"><label class="form-label">' + f.label + req + '</label>' + inner + '</div>';
+    }
+
+    function updateLifeIdRequired() {
+      var radios = document.getElementsByName('f-type');
+      var sel = null;
+      for (var i = 0; i < radios.length; i++) { if (radios[i].checked) { sel = radios[i].value; break; } }
+      if (!sel) return;
+      var lifeField = document.querySelector('[data-field="lifeId"]');
+      if (!lifeField) return;
+      var label = lifeField.querySelector('.form-label');
+      if (!label) return;
+      var star = label.querySelector('.req');
+      if (sel === '生活号') {
+        if (!star) { label.insertAdjacentHTML('beforeend', '<span class="req">*</span>'); }
+      } else if (star) { star.remove(); }
+    }
+
+    function saveAccount() {
+      var p = STATE.platform;
+      var fields = META[p].fields;
+      var obj = {};
+      for (var i = 0; i < fields.length; i++) {
+        var f = fields[i];
+        var v;
+        if (f.control === 'radio') {
+          v = '';
+          var names = document.getElementsByName('f-' + f.key);
+          for (var k = 0; k < names.length; k++) { if (names[k].checked) { v = names[k].value; break; } }
+        } else {
+          var el = document.getElementById('f-' + f.key);
+          v = el ? el.value.trim() : '';
+        }
+        if (f.required && !v) { toast(f.label + ' 为必填'); return; }
+        if (f.control === 'email' && v && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { toast('passport 需为邮箱格式'); return; }
+        obj[f.key] = v;
+      }
+      if (p === 'alipay' && obj.type === '生活号' && !obj.lifeId) { toast('生活号ID 为必填'); return; }
+
+      if (STATE.editingId) {
+        var acc = accounts().find(function (x) { return x.id === STATE.editingId; });
+        Object.assign(acc, obj);
+        toast('账号已更新');
+      } else {
+        var prefix = TPL_ENABLED[p];
+        obj.id = prefix + '-' + String(accounts().length + 1).padStart(3, '0');
+        obj.createdAt = nowStr();
+        if (p === 'baijiahao') { obj.templateEnabled = false; obj.templates = []; }
+        accounts().push(obj);
+        toast('账号已创建');
+      }
+      closeAccountDrawer();
+      renderList();
+      renderStats();
+    }
+
+    
+
+    /* ---------- 付费模板配置 ---------- */
+    function openTplDrawer(id) {
+      STATE.tplAccountId = id;
+      var a = DB.accounts.baijiahao.find(function (x) { return x.id === id; });
+      STATE.tplDraft = (a && a.templates || []).map(function (t) { return { name: t.name, templateId: t.templateId, playletPayType: t.playletPayType || '现金' }; });
+      var radios = document.getElementsByName('tpl-enabled');
+      radios.forEach(function (r) { r.checked = a ? (a.templateEnabled ? r.value === '1' : r.value === '0') : (r.value === '1'); });
+      document.getElementById('tpl-list')._accountName = a ? a.name : '';
+      document.getElementById('tpl-backdrop').hidden = false;
+      document.getElementById('tpl-drawer').hidden = false;
+      renderTplList();
+    }
+    function closeTplDrawer() { document.getElementById('tpl-backdrop').hidden = true; document.getElementById('tpl-drawer').hidden = true; STATE.tplAccountId = null; STATE.tplDraft = []; }
+
+    function renderTplList() {
+      if (!STATE.tplDraft.length) {
+        document.getElementById('tpl-list').innerHTML = '<div class="empty-state"><i data-icon="file-text"></i><div class="empty-title">尚未配置付费模板，点击下方「添加付费模板」</div></div>';
+        injectIcons();
+        return;
+      }
+      document.getElementById('tpl-list').innerHTML = STATE.tplDraft.map(function (t, i) {
+        return '<div class="panel" style="margin-bottom: var(--space-4);">' +
+          '<div class="panel-head">' +
+            '<div class="panel-title" style="flex:1;display:flex;align-items:center;gap:var(--space-2);min-width:0;">' +
+              '<input class="input-control tpl-name-input" data-tpl="name" placeholder="请输入付费模板名称" value="' + escAttr(t.name) + '" style="font-weight:var(--font-weight-h2);">' +
+            '</div>' +
+            '<span class="link-action danger" onclick="removeTpl(' + i + ')"><i data-icon="trash-2"></i>删除</span>' +
+          '</div>' +
+          '<div class="panel-body"><div class="form-grid">' +
+          '<div class="form-field"><label class="form-label">template_id<span class="req">*</span></label><div class="input"><input class="input-control" data-tpl="templateId" placeholder="请输入" value="' + escAttr(t.templateId) + '"></div></div>' +
+          '<div class="form-field full"><label class="form-label">playlet_pay_type<span class="req">*</span></label><div class="radio-group">' +
+          '<label class="radio-option"><input type="radio" name="tpl-pay-' + i + '" value="现金"' + (t.playletPayType === '现金' ? ' checked' : '') + '><span class="radio-dot"></span>现金</label>' +
+          '<label class="radio-option"><input type="radio" name="tpl-pay-' + i + '" value="剧豆"' + (t.playletPayType === '剧豆' ? ' checked' : '') + '><span class="radio-dot"></span>剧豆</label>' +
+          '</div></div>' +
+          '</div></div></div>';
+      }).join('');
+      injectIcons();
+    }
+
+    function addTpl() { STATE.tplDraft.push({ name: '模板' + (STATE.tplDraft.length + 1), templateId: '', playletPayType: '现金' }); renderTplList(); }
+    function removeTpl(i) { STATE.tplDraft.splice(i, 1); renderTplList(); }
+
+    function saveTpl() {
+      var panels = document.querySelectorAll('#tpl-list .panel');
+      var dirty = [];
+      for (var i = 0; i < panels.length; i++) {
+        var name = panels[i].querySelector('[data-tpl="name"]').value.trim();
+        var tid = panels[i].querySelector('[data-tpl="templateId"]').value.trim();
+        var pay = (panels[i].querySelector('input[name="tpl-pay-' + i + '"]:checked') || {}).value || '现金';
+        if (!name || !tid) { toast('模板 ' + (i + 1) + ' 的「付费模板名称」和「template_id」为必填'); return; }
+        dirty.push({ name: name, templateId: tid, playletPayType: pay });
+      }
+      var enabled = document.querySelector('input[name="tpl-enabled"]:checked').value === '1';
+      var a = DB.accounts.baijiahao.find(function (x) { return x.id === STATE.tplAccountId; });
+      if (a) { a.templates = dirty; a.templateEnabled = enabled; }
+      closeTplDrawer();
+      renderList();
+      toast('付费模板配置已保存');
+    }
+
+    /* ---------- 初始化 ---------- */
+    document.getElementById('add-btn').addEventListener('click', openAdd);
+    renderStats();
+    renderList();
+    // 平台切换 chips（顶部快捷切换）
+    var tabBar = document.createElement('div');
+    tabBar.className = 'chips reveal';
+    tabBar.style.marginBottom = 'var(--space-4)';
+    tabBar.innerHTML = ['alipay', 'sohu', 'baijiahao'].map(function (k) {
+      var meta = META[k];
+      return '<button class="chip selectable' + (k === STATE.platform ? ' sel' : '') + '" data-platform-tab="' + k + '" onclick="switchPlatform(\'' + k + '\')"><i data-icon="' + meta.icon + '"></i>' + meta.title + '</button>';
+    }).join('');
+    document.querySelector('.page').insertBefore(tabBar, document.querySelector('.page .panel'));
+    injectIcons();
+  </script>
+</body>
+</html>

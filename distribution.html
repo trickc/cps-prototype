@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>分发管理 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .dist-layout { display: grid; grid-template-columns: 1fr; gap: var(--space-6); }
+    .view-toggle { display: flex; gap: var(--space-2); }
+    .seg-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+      background: var(--surface); color: var(--text-sub); cursor: pointer; font-size: var(--font-size-body);
+      transition: all var(--duration-fast) var(--ease-standard);
+    }
+    .seg-btn:hover { border-color: var(--border-strong); }
+    .seg-btn.sel { border-color: var(--primary); background: var(--primary-muted); color: var(--primary); font-weight: 500; }
+    .seg-btn i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); }
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-2); }
+    .status-cell {
+      display: flex; flex-direction: column; gap: 4px; padding: 8px 10px;
+      border: 1px solid var(--border-faint); border-radius: var(--radius-md); background: var(--surface-2);
+    }
+    .status-cell .pf { font-size: var(--font-size-eyebrow); color: var(--text-mute); }
+    .status-cell .st { font-size: var(--font-size-caption); font-weight: 500; }
+    .status-cell.none { opacity: .6; }
+    .status-cell.none .st { color: var(--text-mute); font-weight: 400; }
+    .extra-chip { display: inline-block; font-size: var(--font-size-caption); color: var(--text-sub); }
+    .extra-chip + .extra-chip::before { content: '·'; margin: 0 6px; color: var(--text-mute); }
+    /* OPPO 记录：CPS/OPPO 双名称双 ID */
+    .cell-stack.name-stack { gap: 5px; }
+    .name-row { display: flex; align-items: center; gap: 6px; }
+    .name-tag { display: inline-flex; align-items: center; height: 16px; padding: 0 5px; border-radius: 4px; font-size: 10px; font-weight: 600; line-height: 1; flex-shrink: 0; background: var(--surface-2); color: var(--text-sub); }
+    .name-tag.mark-oppo { background: #e6f4f1; color: #14574F; }
+    .name-val { font-size: var(--font-size-body); color: var(--text); font-weight: var(--font-weight-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .name-row .mono-badge { flex-shrink: 0; }
+    @media (max-width: 900px) { .special-row { grid-template-columns: 1fr; } }
+
+    /* 修改信息抽屉：分组 + 剧集编辑 */
+    .edit-groups { display: flex; flex-direction: column; gap: var(--space-5); }
+    .edit-group { border: 1px solid var(--border-faint); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
+    .edit-group-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-faint);
+      font-size: var(--font-size-body); font-weight: 600; color: var(--text);
+      background: var(--surface-2);
+    }
+    .edit-group-title i[data-icon] { width: var(--size-icon-sm); height: var(--size-icon-sm); color: var(--primary); }
+    .edit-group .form-grid { padding: var(--space-4) var(--space-5); }
+    .special-control { display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+    .form-static { display: inline-flex; align-items: center; min-height: 40px; font-size: var(--font-size-body); color: var(--text-sub); }
+    .episode-edit-section { border: 1px solid var(--border-faint); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); background: var(--surface); }
+    .episode-edit-section .section-title { margin-bottom: var(--space-3); }
+    .episode-edit-row {
+      display: grid; grid-template-columns: 1fr 1.6fr; gap: var(--space-2) var(--space-3);
+      padding: var(--space-3); border: 1px solid var(--border-faint); border-radius: var(--radius-md); margin-bottom: var(--space-2);
+      align-items: center;
+    }
+    .episode-edit-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; }
+    .episode-edit-file { font-size: var(--font-size-caption); color: var(--text-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ep-seq-label { font-size: var(--font-size-caption); color: var(--text-mute); flex-shrink: 0; }
+    .ep-seq { width: 64px; flex-shrink: 0; }
+    .cover-swatch { display: inline-block; width: 22px; height: 30px; border-radius: 4px; border: 1px solid var(--border-faint); flex-shrink: 0; }
+    .ep-field { display: flex; flex-direction: column; gap: 4px; }
+    .ep-field .form-label { font-size: var(--font-size-caption); color: var(--text-sub); margin: 0; }
+    .ep-specs { grid-column: 1 / -1; font-size: var(--font-size-caption); color: var(--text-mute); padding-top: 2px; }
+    /* 剧集上下架状态 */
+    .ep-online-label { font-size: var(--font-size-caption); color: var(--text-mute); flex-shrink: 0; margin-left: 4px; }
+    .ep-online { width: 82px; flex-shrink: 0; }
+    /* 剧集封面图附件 */
+    .ep-cover-edit { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+    .ep-cover-edit .form-label { font-size: var(--font-size-caption); color: var(--text-sub); margin: 0; }
+    .ep-cover-wrap { display: flex; align-items: center; gap: var(--space-3); }
+    .ep-cover-preview { display: flex; align-items: center; justify-content: center; }
+    .ep-cover-img { width: 36px; height: 48px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-faint); }
+    .cover-swatch.empty { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 48px; border-radius: 6px; background: var(--surface-2); color: var(--text-mute); border: 1px dashed var(--border); }
+    .cover-swatch.empty i { width: 16px; height: 16px; }
+    .ep-cover-actions { display: flex; align-items: center; gap: var(--space-2); }
+    /* 姓名类标签输入 */
+    .tag-input-wrap { display: flex; flex-direction: column; gap: var(--space-2); width: 100%; }
+    .tag-multi { display: flex; flex-wrap: wrap; gap: 6px; min-height: 8px; }
+    .chip-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px 4px 10px; border-radius: 20px; background: var(--surface-2); color: var(--text); font-size: var(--font-size-caption); border: 1px solid var(--border-faint); }
+    .chip-x { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: none; background: transparent; color: var(--text-mute); cursor: pointer; border-radius: 50%; }
+    .chip-x:hover { background: rgba(0,0,0,0.06); color: var(--text); }
+    .chip-x i { width: 12px; height: 12px; }
+    .tag-input-box { width: 100%; }
+    .edit-add-episode { display: flex; gap: var(--space-3); align-items: center; }
+    .edit-add-episode .btn { flex-shrink: 0; }
+    .edit-add-episode select { max-width: 300px; }
+    /* 封面图附件 */
+    .cover-attachment { display: flex; gap: var(--space-4); align-items: flex-start; flex-wrap: wrap; }
+    .cover-preview { flex-shrink: 0; }
+    .cover-thumb, .cover-thumb-img { display: block; width: 96px; height: 128px; border-radius: var(--radius-md); border: 1px solid var(--border-faint); object-fit: cover; }
+    .cover-thumb { display: flex; align-items: center; justify-content: center; }
+    .cover-thumb.empty { flex-direction: column; gap: 6px; color: var(--text-mute); font-size: var(--font-size-caption); background: var(--surface-2); }
+    .cover-actions { display: flex; flex-direction: column; gap: var(--space-2); }
+    /* 剧集列表：添加 + 删除 */
+    .episode-add-bar { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+    .episode-del-btn {
+      margin-left: auto; display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border: none; border-radius: 6px;
+      background: transparent; color: var(--text-mute); cursor: pointer; transition: all var(--duration-fast);
+    }
+    .episode-del-btn:hover { background: #fdecec; color: #d5484d; }
+    /* 剧集搜索面板 */
+    .ep-search-panel { border: 1px solid var(--border-faint); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); background: var(--surface-2); }
+    .ep-search-panel .toolbar { margin-bottom: var(--space-2); }
+    .ep-search-panel .input { flex: 1; }
+    .ep-search-list { display: flex; flex-direction: column; gap: var(--space-2); max-height: 280px; overflow-y: auto; }
+    .ep-search-item {
+      display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--border-faint); border-radius: var(--radius-md); background: var(--surface);
+      cursor: pointer; transition: border-color var(--duration-fast);
+    }
+    .ep-search-item:hover { border-color: var(--primary); }
+    .ep-search-cover { display: flex; align-items: center; justify-content: center; width: 40px; height: 52px; border-radius: 6px; color: #fff; font-size: var(--font-size-body); font-weight: 600; flex-shrink: 0; }
+    .ep-search-main { flex: 1; min-width: 0; }
+    .ep-search-title { font-size: var(--font-size-body); color: var(--text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ep-search-sub { font-size: var(--font-size-caption); color: var(--text-mute); }
+    .ep-search-add { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); font-size: var(--font-size-body); font-weight: 500; flex-shrink: 0; }
+    /* OPPO 列表：行内上下架 + 批量操作 */
+    .online-select { width: 96px; }
+    .row-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+    #check-all { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+    .bulk-actions { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+    .bulk-count { font-size: var(--font-size-caption); color: var(--text-sub); padding-right: var(--space-1); white-space: nowrap; }
+    @media (max-width: 640px) { .episode-edit-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body data-page="distribution">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧剧库 / <b>分发管理</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">分发管理</h1>
+          <p class="page-desc">追踪短剧分发到各平台后的上报状态与审核结果，支持重新推送、修改信息、上下架。</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-md" onclick="loadRecords()"><i data-icon="refresh-cw"></i>刷新状态</button>
+        </div>
+      </div>
+
+      <div class="stat-grid reveal">
+        <div class="stat-card">
+          <div class="stat-label"><i data-icon="layers"></i>分发记录</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-foot">短剧 × 平台 总记录数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i data-icon="refresh-cw"></i>同步中</div>
+          <div class="stat-value" id="stat-syncing">—</div>
+          <div class="stat-foot">提审 / 转码 / 上传等处理中</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i data-icon="check-circle"></i>已上架</div>
+          <div class="stat-value" id="stat-online">—</div>
+          <div class="stat-foot">平台侧已上线 / 已发布</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i data-icon="alert-triangle"></i>异常</div>
+          <div class="stat-value" id="stat-error">—</div>
+          <div class="stat-foot">推送失败 / 驳回待处理</div>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="filter"></i>平台</div>
+          <span class="tag tag-neutral" id="result-count">共 0 条</span>
+        </div>
+        <div class="panel-body">
+          <div class="chips" id="platform-tabs"></div>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="list"></i>分发清单</div>
+          <div class="view-toggle">
+            <button class="seg-btn sel" data-view="record" onclick="switchView('record')"><i data-icon="list"></i>记录视图</button>
+            <button class="seg-btn" data-view="summary" onclick="switchView('summary')"><i data-icon="layers"></i>汇总视图</button>
+          </div>
+        </div>
+        <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-faint);">
+          <div class="toolbar">
+            <div class="input">
+              <i data-icon="search"></i>
+              <input class="input-control" id="kw" type="text" placeholder="搜索短剧名称 / ID">
+            </div>
+            <select class="input" id="status-filter"></select>
+            <button class="btn btn-secondary btn-md" onclick="loadRecords()"><i data-icon="search"></i>搜索</button>
+            <button class="btn btn-ghost btn-md" onclick="resetFilter()">重置</button>
+            <span class="spacer"></span>
+            <div id="bulk-actions" class="bulk-actions" style="display:none">
+              <span class="bulk-count" id="bulk-count">已选 0 条</span>
+              <button class="btn btn-secondary btn-md" onclick="bulkResubmit()"><i data-icon="refresh-cw"></i>批量重新推送</button>
+              <button class="btn btn-secondary btn-md" onclick="bulkSetOnline('上架')"><i data-icon="circle-check"></i>批量上架</button>
+              <button class="btn btn-secondary btn-md" onclick="bulkSetOnline('下架')"><i data-icon="x"></i>批量下架</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table" id="main-table">
+            <thead id="main-thead"></thead>
+            <tbody id="main-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="pg-info">共 0 条</span>
+          <div class="pg-btns"><button class="pg-btn active">1</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 修改信息 / 详情抽屉 -->
+  <div class="backdrop" id="edit-backdrop" hidden onclick="closeEdit()"></div>
+  <div class="drawer" id="edit-drawer" hidden>
+    <div class="drawer-head">
+      <div class="drawer-title" id="edit-title">修改信息</div>
+      <button class="btn btn-ghost btn-md" onclick="closeEdit()"><i data-icon="x"></i></button>
+    </div>
+    <div class="drawer-body" id="edit-body"></div>
+    <div class="drawer-foot">
+      <button class="btn btn-ghost btn-md" onclick="closeEdit()">取消</button>
+      <button class="btn btn-primary btn-md" onclick="saveEdit()"><i data-icon="send"></i>保存并重新同步</button>
+    </div>
+  </div>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script>
+    var STATE = { view: 'record', platform: '', status: '', kw: '', editingId: null, epSearchOpen: false, epSearchKw: '', editTags: [], editTagFields: {}, editDramaType: '', editEpOnline: {}, editEpCovers: {}, selected: {} };
+
+    function platformName(k) {
+      var p = PLATFORMS.find(function (x) { return x.key === k; });
+      return p ? p.name : k;
+    }
+    function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]); }); }
+    function posterColor(c) { return (typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)) ? c : '#5E7A8F'; }
+
+    /* 渲染平台 Tab：全部 + 7 个平台 */
+    function renderTabs() {
+      var box = document.getElementById('platform-tabs');
+      var items = [{ key: '', name: '全部' }].concat(PLATFORMS.map(function (p) { return { key: p.key, name: p.name }; }));
+      box.innerHTML = items.map(function (it) {
+        return '<button class="chip selectable' + (STATE.platform === it.key ? ' sel' : '') + '" onclick="switchPlatform(\'' + it.key + '\')">' + it.name + '</button>';
+      }).join('');
+    }
+
+    function switchPlatform(k) {
+      STATE.platform = k;
+      STATE.selected = {};
+      STATE.status = '';
+      renderTabs();
+      renderStatusFilter();
+      loadRecords();
+    }
+
+    function switchView(v) {
+      STATE.view = v;
+      document.querySelectorAll('.seg-btn').forEach(function (b) {
+        b.classList.toggle('sel', b.getAttribute('data-view') === v);
+      });
+      renderTable();
+    }
+
+    /* 状态筛选项：随平台 Tab 变化（各平台状态枚举不同） */
+    function renderStatusFilter() {
+      var sel = document.getElementById('status-filter');
+      var opts = [{ code: '', label: '全部状态' }];
+      if (STATE.platform) {
+        var stages = (DIST_STATUS[STATE.platform] || {}).stages || [];
+        stages.forEach(function (s) { opts.push({ code: s.code, label: s.label }); });
+      }
+      sel.innerHTML = opts.map(function (o) {
+        return '<option value="' + o.code + '"' + (STATE.status === o.code ? ' selected' : '') + '>' + o.label + '</option>';
+      }).join('');
+    }
+
+    /* 当前筛选后的记录集合 */
+    function currentRecords() {
+      var list = (DB.distributionRecords || []).slice();
+      if (STATE.platform) list = list.filter(function (r) { return r.platform === STATE.platform; });
+      if (STATE.status) list = list.filter(function (r) { return r.status === STATE.status; });
+      if (STATE.kw) {
+        list = list.filter(function (r) {
+          var d = dramaById(r.dramaId);
+          return d && (d.title.indexOf(STATE.kw) > -1 || d.id.indexOf(STATE.kw) > -1);
+        });
+      }
+      return list.sort(function (a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+    }
+
+    function renderStats() {
+      var all = DB.distributionRecords || [];
+      var syncing = 0, online = 0, error = 0;
+      all.forEach(function (r) {
+        var info = distStatusInfo(r.platform, r.status);
+        if (info.tone === 'error') error++;
+        else if (isOnlineState(r.platform, r.status)) online++;
+        else if (info.tone === 'warning' || info.tone === 'info') syncing++;
+      });
+      document.getElementById('stat-total').textContent = all.length;
+      document.getElementById('stat-syncing').textContent = syncing;
+      document.getElementById('stat-online').textContent = online;
+      document.getElementById('stat-error').textContent = error;
+    }
+
+    function statusTag(platform, code) {
+      var info = distStatusInfo(platform, code);
+      return '<span class="tag tag-' + info.tone + '">' + info.label + '</span>';
+    }
+
+    /* ===== 记录视图：每行一条 短剧×平台 记录，展示该平台特有状态字段 ===== */
+    function isOppoTab() { return STATE.platform === 'oppo'; }
+
+    function onlineStatusEdit(r, id) {
+      var cur = (r.extra && r.extra.onlineStatus) || '上架';
+      return '<select class="input online-select" data-id="' + id + '" onchange="setOnlineInline(this)">' +
+        '<option value="上架"' + (cur === '上架' ? ' selected' : '') + '>上架</option>' +
+        '<option value="下架"' + (cur === '下架' ? ' selected' : '') + '>下架</option>' +
+        '</select>';
+    }
+
+    function recordThead() {
+      var extraCols = STATE.platform ? (DIST_STATUS[STATE.platform] || {}).extra || [] : [];
+      var statusLabel = STATE.platform === 'oppo' ? '推送状态' : '分发状态';
+      var th = '<tr>';
+      if (isOppoTab()) th += '<th style="width:36px"><input type="checkbox" id="check-all" onchange="toggleCheckAll(this.checked)"></th>';
+      th += '<th>短剧</th><th>平台</th><th>' + statusLabel + '</th>';
+      if (isOppoTab()) th += '<th>上下架状态</th>';
+      extraCols.forEach(function (e) { th += '<th>' + e.label + '</th>'; });
+      th += '<th>提交时间</th><th>最近同步</th><th style="text-align:right">操作</th></tr>';
+      return th;
+    }
+
+    /* 短剧名称/ID 单元格：OPPO 需并列展示 CPS 名称/ID 与 OPPO 名称/ID */
+    function nameCellHtml(r, d) {
+      var title = d ? d.title : r.dramaId;
+      var cid = d ? d.id : r.dramaId;
+      var pc = posterColor(d ? d.cover : '');
+      var thumb = '<span class="poster-thumb" style="background:' + pc + '20; color:' + pc + '">' + title.charAt(0) + '</span>';
+      if (r.platform === 'oppo') {
+        var oTitle = r.oppoTitle || title;
+        var oSpid = r.oppoSpid || '—';
+        return '<td><div class="cell-with-poster">' + thumb +
+          '<div class="cell-stack name-stack">' +
+            '<div class="name-row"><span class="name-tag">CPS</span><span class="name-val">' + escHtml(title) + '</span><span class="mono-badge">' + escHtml(cid) + '</span></div>' +
+            '<div class="name-row"><span class="name-tag mark-oppo">OPPO</span><span class="name-val">' + escHtml(oTitle) + '</span><span class="mono-badge">' + escHtml(oSpid) + '</span></div>' +
+          '</div></div></td>';
+      }
+      return '<td><div class="cell-with-poster">' + thumb +
+        '<div class="cell-stack"><span class="cell-title">' + title + '</span><span class="mono-badge">' + r.dramaId + '</span></div></div></td>';
+    }
+
+    function recordRow(r) {
+      var d = dramaById(r.dramaId);
+      var extraCols = STATE.platform ? (DIST_STATUS[STATE.platform] || {}).extra || [] : [];
+      var eHtml = extraCols.map(function (e) {
+        var v = (r.extra || {})[e.k];
+        return '<td><span class="cell-sub">' + escHtml(v || '—') + '</span></td>';
+      }).join('');
+      var ops = buildOps(r);
+      var checked = STATE.selected[r.id] ? ' checked' : '';
+      var row = '<tr>';
+      if (isOppoTab()) row += '<td><input type="checkbox" class="row-check" value="' + escHtml(r.id) + '"' + checked + ' onchange="toggleSelect(\'' + escHtml(r.id) + '\', this.checked)"></td>';
+      row += nameCellHtml(r, d) +
+        '<td>' + platformName(r.platform) + '</td>' +
+        '<td>' + statusTag(r.platform, r.status) + '</td>';
+      if (isOppoTab()) row += '<td>' + onlineStatusEdit(r, r.id) + '</td>';
+      row += eHtml +
+        '<td><span class="cell-sub">' + escHtml(r.submittedAt) + '</span></td>' +
+        '<td><span class="cell-sub">' + escHtml(r.updatedAt) + '</span></td>' +
+        '<td style="text-align:right; white-space:nowrap;">' + ops + '</td>' +
+        '</tr>';
+      return row;
+    }
+
+    /* ===== 汇总视图：每行一部短剧，各平台状态网格 ===== */
+    function summaryThead() {
+      var th = '<tr><th>短剧</th>';
+      PLATFORMS.forEach(function (p) { th += '<th>' + p.name + '</th>'; });
+      th += '<th style="text-align:right">操作</th></tr>';
+      return th;
+    }
+
+    function dramaStatusMap(dramaId) {
+      var map = {};
+      (DB.distributionRecords || []).forEach(function (r) {
+        if (r.dramaId === dramaId) map[r.platform] = r;
+      });
+      return map;
+    }
+
+    function summaryRow(d) {
+      var map = dramaStatusMap(d.id);
+      var cells = PLATFORMS.map(function (p) {
+        var r = map[p.key];
+        if (!r) return '<td><div class="status-cell none"><span class="pf">' + p.name + '</span><span class="st">未分发</span></div></td>';
+        var info = distStatusInfo(p.key, r.status);
+        var extraTxt = ((DIST_STATUS[p.key] || {}).extra || []).map(function (e) {
+          return (r.extra || {})[e.k];
+        }).filter(Boolean).join(' · ');
+        return '<td><div class="status-cell"><span class="pf">' + p.name + '</span><span class="st" style="color:var(--status-' + info.tone + ')">' + info.label + '</span>' +
+          (extraTxt ? '<span class="extra-chip">' + escHtml(extraTxt) + '</span>' : '') + '</div></td>';
+      }).join('');
+      var hasRec = Object.keys(map).length > 0;
+      return '<tr>' +
+        '<td><div class="cell-with-poster"><span class="poster-thumb" style="background:' + posterColor(d.cover) + '20; color:' + posterColor(d.cover) + '">' + d.title.charAt(0) + '</span>' +
+        '<div class="cell-stack"><span class="cell-title">' + d.title + '</span><span class="mono-badge">' + d.id + '</span></div></div></td>' +
+        cells +
+        '<td style="text-align:right; white-space:nowrap;"><a class="link-action" href="distribute.html?id=' + d.id + '">去分发</a>' + (hasRec ? '<a class="link-action" onclick="jumpRecord(\'' + d.id + '\')">看记录</a>' : '') + '</td>' +
+        '</tr>';
+    }
+
+    /* 操作按钮：重新推送 / 上下架 / 修改信息 */
+    function buildOps(r) {
+      var ops = '';
+      var info = distStatusInfo(r.platform, r.status);
+      if (info.tone === 'error') {
+        ops += '<a class="link-action" onclick="resubmit(\'' + r.id + '\')">重新推送</a>';
+      }
+      if (isOnlineState(r.platform, r.status)) {
+        ops += '<a class="link-action danger" onclick="toggleOnline(\'' + r.id + '\')">下架</a>';
+      } else if (isOfflineState(r.platform, r.status)) {
+        ops += '<a class="link-action" onclick="toggleOnline(\'' + r.id + '\')">上架</a>';
+      }
+      ops += '<a class="link-action" onclick="openEdit(\'' + r.id + '\')">修改信息</a>';
+      return ops || '<span class="cell-sub">—</span>';
+    }
+
+    function renderTable() {
+      var thead = document.getElementById('main-thead');
+      var tbody = document.getElementById('main-tbody');
+      var list = currentRecords();
+      document.getElementById('result-count').textContent = '共 ' + list.length + ' 条';
+      document.getElementById('pg-info').textContent = '共 ' + list.length + ' 条';
+
+      if (STATE.view === 'record') {
+        thead.innerHTML = recordThead();
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="12"><div class="empty-state"><i data-icon="search"></i><span class="empty-title">暂无分发记录</span></div></td></tr>';
+        } else {
+          tbody.innerHTML = list.map(recordRow).join('');
+        }
+      } else {
+        thead.innerHTML = summaryThead();
+        var ds = DB.dramas;
+        if (STATE.platform) ds = ds.filter(function (d) { return d.platforms.indexOf(STATE.platform) > -1; });
+        if (STATE.kw) ds = ds.filter(function (d) { return d.title.indexOf(STATE.kw) > -1 || d.id.indexOf(STATE.kw) > -1; });
+        if (!ds.length) {
+          tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i data-icon="search"></i><span class="empty-title">没有匹配的短剧</span></div></td></tr>';
+        } else {
+          tbody.innerHTML = ds.map(summaryRow).join('');
+        }
+      }
+      updateBulkBar();
+      injectIcons();
+    }
+
+    async function loadRecords() {
+      STATE.kw = document.getElementById('kw').value.trim();
+      STATE.status = document.getElementById('status-filter').value;
+      renderStats();
+      renderTable();
+    }
+
+    function resetFilter() {
+      document.getElementById('kw').value = '';
+      STATE.status = '';
+      renderStatusFilter();
+      loadRecords();
+    }
+
+    function jumpRecord(dramaId) {
+      STATE.view = 'record';
+      STATE.platform = '';
+      STATE.status = '';
+      document.getElementById('kw').value = dramaId;
+      renderTabs();
+      renderStatusFilter();
+      document.querySelectorAll('.seg-btn').forEach(function (b) { b.classList.toggle('sel', b.getAttribute('data-view') === 'record'); });
+      loadRecords();
+    }
+
+    /* ===== 操作：重新推送 / 上下架 / 修改信息 ===== */
+    async function resubmit(id) {
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === id; });
+      var d = r ? dramaById(r.dramaId) : null;
+      var ok = await confirmDialog({
+        title: '重新推送',
+        message: '确定重新推送《' + (d ? d.title : id) + '》到 ' + (r ? platformName(r.platform) : '') + ' 吗？将重新提交审核流转。',
+        confirmText: '确认推送'
+      });
+      if (!ok) return;
+      var res = await API.resubmitDistribution(id);
+      if (res.code !== 0) { toast(res.msg || '操作失败'); return; }
+      var dd = dramaById(res.data.dramaId);
+      toast('已重新推送' + (dd ? '《' + dd.title + '》' : '') + '至 ' + platformName(res.data.platform));
+      loadRecords();
+    }
+
+    async function toggleOnline(id) {
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === id; });
+      var d = r ? dramaById(r.dramaId) : null;
+      var action = isOnlineState(r.platform, r.status) ? 'offline' : 'online';
+      var ok = await confirmDialog({
+        title: action === 'offline' ? '确认下架' : '确认上架',
+        message: '确定将《' + (d ? d.title : id) + '》在 ' + platformName(r.platform) + ' 平台' + (action === 'offline' ? '下架' : '上架') + '吗？',
+        confirmText: action === 'offline' ? '确认下架' : '确认上架',
+        danger: action === 'offline'
+      });
+      if (!ok) return;
+      var res = await API.toggleDistributionOnline(id);
+      if (res.code !== 0) { toast(res.msg || '操作失败'); return; }
+      var dd = dramaById(res.data.dramaId);
+      toast((res.action === 'offline' ? '已下架' : '已上架') + ' · ' + platformName(res.data.platform));
+      loadRecords();
+    }
+
+    /* ===== 行内上下架状态编辑（OPPO） ===== */
+    async function setOnlineInline(sel) {
+      var id = sel.getAttribute('data-id');
+      var value = sel.value;
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === id; });
+      if (!r) return;
+      r.extra = r.extra || {};
+      var prev = r.extra.onlineStatus || '上架';
+      if (prev === value) return;
+      var d = dramaById(r.dramaId);
+      var ok = await confirmDialog({
+        title: value === '下架' ? '确认下架' : '确认上架',
+        message: '确定将《' + (d ? d.title : id) + '》在 OPPO 平台' + value + '吗？',
+        confirmText: value === '下架' ? '确认下架' : '确认上架',
+        danger: value === '下架'
+      });
+      if (!ok) { sel.value = prev; return; }
+      r.extra.onlineStatus = value;
+      r.updatedAt = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+      toast('「' + (d ? d.title : id) + '」已改为' + value);
+      renderTable();
+    }
+
+    /* ===== 批量选择 ===== */
+    function toggleSelect(id, checked) {
+      if (checked) STATE.selected[id] = true;
+      else delete STATE.selected[id];
+      updateBulkBar();
+    }
+
+    function toggleCheckAll(checked) {
+      var list = currentRecords();
+      STATE.selected = {};
+      if (checked) list.forEach(function (r) { STATE.selected[r.id] = true; });
+      renderTable();
+    }
+
+    function selectedIds() {
+      return Object.keys(STATE.selected || {}).filter(function (id) { return STATE.selected[id]; });
+    }
+
+    function updateBulkBar() {
+      var bar = document.getElementById('bulk-actions');
+      if (!bar) return;
+      var show = isOppoTab() && STATE.view === 'record';
+      bar.style.display = show ? '' : 'none';
+      if (!show) return;
+      var n = selectedIds().length;
+      document.getElementById('bulk-count').textContent = '已选 ' + n + ' 条';
+      var all = document.getElementById('check-all');
+      if (all) {
+        var total = currentRecords().length;
+        all.indeterminate = (n > 0 && n < total);
+        all.checked = (total > 0 && n === total);
+      }
+    }
+
+    async function bulkResubmit() {
+      var ids = selectedIds();
+      if (!ids.length) { toast('请先勾选要重新推送的记录'); return; }
+      var ok = await confirmDialog({
+        title: '批量重新推送',
+        message: '确定为选中的 ' + ids.length + ' 条 OPPO 记录重新推送吗？将重新提交审核流转。',
+        confirmText: '确认推送'
+      });
+      if (!ok) return;
+      for (var i = 0; i < ids.length; i++) {
+        var res = await API.resubmitDistribution(ids[i]);
+        if (res.code !== 0) { toast(res.msg || '第 ' + (i + 1) + ' 条操作失败'); return; }
+      }
+      STATE.selected = {};
+      toast('已批量重新推送 ' + ids.length + ' 条记录');
+      loadRecords();
+    }
+
+    async function bulkSetOnline(value) {
+      var ids = selectedIds();
+      if (!ids.length) { toast('请先勾选要操作的记录'); return; }
+      var ok = await confirmDialog({
+        title: value === '下架' ? '批量下架' : '批量上架',
+        message: '确定将选中的 ' + ids.length + ' 条 OPPO 记录批量' + value + '吗？',
+        confirmText: value === '下架' ? '确认下架' : '确认上架',
+        danger: value === '下架'
+      });
+      if (!ok) return;
+      var now = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+      ids.forEach(function (id) {
+        var r = (DB.distributionRecords || []).find(function (x) { return x.id === id; });
+        if (!r) return;
+        r.extra = r.extra || {};
+        r.extra.onlineStatus = value;
+        r.updatedAt = now;
+      });
+      STATE.selected = {};
+      toast('已批量' + value + ' ' + ids.length + ' 条记录');
+      loadRecords();
+    }
+
+    /* 修改信息抽屉：展示该平台特有字段（只读现状 + 说明），保存后触发重新同步 */
+    function platformSpecialFields(platform) {
+      var spec = (PLATFORM_SPECIAL && PLATFORM_SPECIAL[platform]) || [];
+      if (platform === 'baijiahao' && !Array.isArray(spec)) {
+        return [spec.account].concat(spec.shared || [], spec.perAccount || []);
+      }
+      return spec;
+    }
+
+    /* OPPO「修改信息」完整字段清单（按字段映射表：短剧级 25 字段，剧集级在剧集列表编辑区）
+       target: drama → 读短剧对象；extra → 读分发记录 r.extra；readonly → 系统生成只读 */
+    var OPPO_EDIT_GROUPS = [
+      {
+        group: '分发状态',
+        icon: 'activity',
+        fields: [
+          { label: '推送状态', target: 'readonly', key: 'status' }
+        ]
+      },
+      {
+        group: '短剧信息',
+        icon: 'info',
+        fields: [
+          { label: '短剧ID', target: 'readonly', key: 'id' },
+          { label: '标题', target: 'drama', key: 'title', control: 'text', required: true },
+          { label: '简介', target: 'drama', key: 'synopsis', control: 'textarea', required: true },
+          { label: '分类', target: 'drama', key: 'tags', control: 'tags', required: true },
+          { label: '更新状态', target: 'drama', key: 'updateStatus', control: 'select', options: ['已完结', '更新中'], required: true },
+          { label: '总集数', target: 'drama', key: 'totalEpisodes', control: 'number', required: true },
+          { label: '上下架状态', target: 'extra', key: 'onlineStatus', control: 'select', options: ['上架', '下架'], default: '上架', required: true },
+          { label: '封面图（竖版3:4）', target: 'drama', key: 'cover', control: 'cover', required: true },
+          { label: '更新时间', target: 'readonly', key: 'updatedAt' },
+          { label: '短剧类型', target: 'extra', key: 'dramaType', control: 'radio', options: ['普通短剧', '快应用短剧'], default: '普通短剧', required: true },
+          { label: '跳转链接', target: 'extra', key: 'jumpLink', control: 'jump-link', required: true },
+          { label: '短剧分类', target: 'drama', key: 'contentL1', control: 'content-l1', required: true },
+          { label: '短剧二级分类', target: 'drama', key: 'shortplayType', control: 'content-l2', required: true },
+          { label: '制片人', target: 'drama', key: 'producer', control: 'tag-input' },
+          { label: '导演', target: 'drama', key: 'director', control: 'tag-input' },
+          { label: '主要演员', target: 'drama', key: 'actors', control: 'tag-input' },
+          { label: '版权方', target: 'drama', key: 'copyright', control: 'text' },
+          { label: '投资额（万元）', target: 'drama', key: 'investment', control: 'number' },
+          { label: '是否首轮播出', target: 'extra', key: 'premiereStatus', control: 'select', options: ['全网首轮独播', '全网首轮联播', '非首轮播出'], default: '全网首轮独播' },
+          { label: '是否转授权', target: 'extra', key: 'isTransfer', control: 'radio', options: ['是', '否'], default: '是', required: true },
+          { label: '全网短剧首次上线时间', target: 'drama', key: 'firstReleaseDate', control: 'date' },
+          { label: '版权到期下架时间', target: 'extra', key: 'copyrightExpiry', control: 'datetime', required: true },
+          { label: '精彩点位', target: 'drama', key: 'highlights', control: 'text' },
+          { label: '付费卡点集', target: 'drama', key: 'chargeEpisode', control: 'number' },
+          { label: '横图封面（横版16:9）', target: 'drama', key: 'coverHorizontal', control: 'cover' }
+        ]
+      }
+    ];
+
+    /* 内容分类（一级）由 短剧二级分类（shortplayType）反推 */
+    function contentTypeL1(st) {
+      if (!st) return '';
+      var found = '';
+      Object.keys(CONTENT_CATEGORIES).forEach(function (k) {
+        if (CONTENT_CATEGORIES[k].indexOf(st) > -1) found = k;
+      });
+      return found;
+    }
+    function cascadeContentL2(l1Sel) {
+      var l2 = document.getElementById('ef-shortplayType');
+      if (!l2) return;
+      var cur = l2.value;
+      var list = CONTENT_CATEGORIES[l1Sel.value] || [];
+      l2.innerHTML = list.map(function (c) {
+        return '<option' + (c === cur ? ' selected' : '') + '>' + c + '</option>';
+      }).join('');
+      if (list.indexOf(cur) === -1 && list.length) l2.value = list[0];
+    }
+
+    /* 读取字段当前值 */
+    function editFieldValue(f, d, r) {
+      if (f.target === 'readonly') {
+        if (f.key === 'status') return r.status;
+        if (f.key === 'updatedAt') return r.updatedAt;
+        if (f.key === 'online') return '上架';
+        return d ? d.id : '';
+      }
+      if (f.target === 'extra') {
+        var ex = (r && r.extra) || {};
+        return ex[f.key] != null ? ex[f.key] : (f.default || '');
+      }
+      var v = d ? d[f.key] : '';
+      if (f.key === 'contentL1') v = contentTypeL1(d ? d.shortplayType : '');
+      if (f.control === 'tags' && Array.isArray(v)) return v.join('、');
+      return v == null ? '' : v;
+    }
+
+    /* 渲染单个可编辑字段 */
+    function editFieldHtml(f, d, r) {
+      var val = editFieldValue(f, d, r);
+      var id = 'ef-' + f.key;
+      var label = '<label class="form-label" for="' + id + '">' + escHtml(f.label) + (f.required ? '<span class="req">*</span>' : '') + '</label>';
+      var ctrl = '';
+      if (f.control === 'textarea') {
+        ctrl = '<textarea class="input" id="' + id + '" rows="3">' + escHtml(val) + '</textarea>';
+      } else if (f.control === 'select') {
+        ctrl = '<select class="input" id="' + id + '">' + (f.options || []).map(function (o) {
+          return '<option' + (o === val ? ' selected' : '') + '>' + escHtml(o) + '</option>';
+        }).join('') + '</select>';
+      } else if (f.control === 'content-l1') {
+        var l1v = contentTypeL1(val) || '';
+        ctrl = '<select class="input" id="' + id + '" onchange="cascadeContentL2(this)">' + Object.keys(CONTENT_CATEGORIES).map(function (k) {
+          return '<option' + (k === l1v ? ' selected' : '') + '>' + escHtml(k) + '</option>';
+        }).join('') + '</select>';
+      } else if (f.control === 'content-l2') {
+        var l1k = contentTypeL1(val) || Object.keys(CONTENT_CATEGORIES)[0];
+        var l2list = CONTENT_CATEGORIES[l1k] || [];
+        ctrl = '<select class="input" id="' + id + '">' + l2list.map(function (c) {
+          return '<option' + (c === val ? ' selected' : '') + '>' + escHtml(c) + '</option>';
+        }).join('') + '</select>';
+      } else if (f.control === 'radio') {
+        if (f.key === 'dramaType') STATE.editDramaType = (val || f.default || '普通短剧');
+        ctrl = '<div class="special-control">' + (f.options || []).map(function (o) {
+          var ck = (val === o) || (val === '' && o === f.default);
+          var onchg = (f.key === 'dramaType') ? ' onchange="STATE.editDramaType=this.value;refreshJumpLink()"' : '';
+          return '<label class="radio-option"><input type="radio" name="' + id + '" value="' + escHtml(o) + '"' + (ck ? ' checked' : '') + onchg + '><span class="radio-dot"></span>' + escHtml(o) + '</label>';
+        }).join('') + '</div>';
+      } else if (f.control === 'datetime') {
+        ctrl = '<input class="input" id="' + id + '" type="datetime-local" value="' + escHtml(val) + '">';
+      } else if (f.control === 'date') {
+        ctrl = '<input class="input" id="' + id + '" type="date" value="' + escHtml(val) + '">';
+      } else if (f.control === 'jump-link') {
+        var jdt = STATE.editDramaType || '普通短剧';
+        var isQuick = jdt === '快应用短剧';
+        ctrl = '<div id="jump-link-wrap"' + (isQuick ? '' : ' style="display:none"') + '>' +
+          '<input class="input" id="' + id + '" type="url" value="' + escHtml(val) + '" placeholder="请输入跳转链接（快应用短剧必填）">' +
+          '</div>';
+      } else if (f.control === 'number') {
+        ctrl = '<input class="input" id="' + id + '" type="number" value="' + escHtml(val) + '">';
+      } else if (f.control === 'tags') {
+        /* 标签多选：对应基础信息「标签」（枚举 ALIPAY_TAGS） */
+        var tagArr = (d && Array.isArray(d.tags)) ? d.tags.filter(function (x) { return ALIPAY_TAGS.indexOf(x) > -1; }) : [];
+        STATE.editTags = tagArr.slice();
+        ctrl = '<div class="tag-pick" id="' + id + '"></div>';
+      } else if (f.control === 'tag-input') {
+        /* 姓名类标签输入：回车形成一个标签（制片人/导演/主要演员共用） */
+        var tv = String(val == null ? '' : val).split(/[、,，;；\s]+/).filter(Boolean);
+        STATE.editTagFields = STATE.editTagFields || {};
+        STATE.editTagFields[f.key] = tv.slice();
+        ctrl = '<div class="tag-input-wrap" id="' + id + '"></div>';
+      } else if (f.control === 'color') {
+        var c = val; if (!(typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c))) c = '#333333';
+        ctrl = '<input class="input" type="text" id="' + id + '_hex" value="' + escHtml(c) + '" style="width:90px;font-family:monospace;"><input type="color" value="' + c + '" oninput="document.getElementById(\'' + id + '_hex\').value=this.value" style="width:46px;height:40px;padding:2px;">';
+      } else if (f.control === 'cover') {
+        var cid = id;
+        var cval = String(val == null ? '' : val);
+        var isImg = /^(data:image\/|https?:\/\/|\.{1,2}\/)/.test(cval);
+        var isHex = /^#[0-9a-fA-F]{6}$/.test(cval);
+        var thumb;
+        if (isImg) thumb = '<img class="cover-thumb-img" src="' + escHtml(cval) + '" alt="">';
+        else if (isHex) thumb = '<div class="cover-thumb" style="background:' + escHtml(cval) + '"></div>';
+        else thumb = '<div class="cover-thumb empty"><i data-icon="image"></i><span>暂无封面图</span></div>';
+        ctrl = '<input type="hidden" id="' + cid + '" value="' + escHtml(cval) + '">' +
+          '<div class="cover-attachment">' +
+            '<div class="cover-preview" id="' + cid + '_preview">' + thumb + '</div>' +
+            '<div class="cover-actions">' +
+              '<input type="file" accept="image/*" id="' + cid + '_file" style="display:none" onchange="coverUpload(\'' + cid + '\', this)">' +
+              '<button class="btn btn-secondary btn-md" type="button" onclick="document.getElementById(\'' + cid + '_file\').click()"><i data-icon="upload"></i>更换图片</button>' +
+              '<button class="btn btn-ghost btn-md" type="button" onclick="coverRemove(\'' + cid + '\')"><i data-icon="trash-2"></i>删除</button>' +
+            '</div>' +
+          '</div>';
+      } else {
+        ctrl = '<input class="input" id="' + id + '" type="text" value="' + escHtml(val) + '">';
+      }
+      return '<div class="form-field">' + label + ctrl + '</div>';
+    }
+
+    /* 视频时长（秒）→ m:ss */
+    function fmtDuration(sec) {
+      sec = Number(sec) || 0;
+      var m = Math.floor(sec / 60), s = sec % 60;
+      return m + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    /* 初始化剧集级编辑状态（上下架 + 封面图） */
+    function ensureEpEditState(d) {
+      STATE.editEpOnline = STATE.editEpOnline || {};
+      STATE.editEpCovers = STATE.editEpCovers || {};
+      linksForDrama(d.id).forEach(function (l) {
+        var ep = episodeById(l.episodeId);
+        if (STATE.editEpOnline[l.episodeId] == null) STATE.editEpOnline[l.episodeId] = (ep && ep.onlineStatus) || '上架';
+        if (STATE.editEpCovers[l.episodeId] == null) STATE.editEpCovers[l.episodeId] = (ep && ep.cover) || '';
+      });
+    }
+
+    /* 剧集封面缩略 */
+    function epCoverThumbHtml(cval) {
+      var img = /^(data:image\/|https?:\/\/|\.{1,2}\/)/.test(cval);
+      var hex = /^#[0-9a-fA-F]{6}$/.test(cval);
+      if (img) return '<img class="ep-cover-img" src="' + escHtml(cval) + '" alt="">';
+      if (hex) return '<span class="cover-swatch" style="background:' + escHtml(cval) + '"></span>';
+      return '<span class="cover-swatch empty"><i data-icon="image"></i></span>';
+    }
+
+    /* 渲染该短剧的剧集列表编辑区（搜索选择添加 + 删除功能） */
+    function renderEpisodeSection(d) {
+      var box = document.getElementById('ep-section');
+      if (!box) return;
+      ensureEpEditState(d);
+      var links = linksForDrama(d.id);
+      var rows = links.map(function (l) {
+        var ep = episodeById(l.episodeId);
+        var fn = ep ? ep.fileName : l.episodeId;
+        var spec = ep ? [
+          (ep.duration != null ? fmtDuration(ep.duration) : ''),
+          (ep.width && ep.height) ? (ep.width + '×' + ep.height) : '',
+          ep.size || '',
+          ep.definition || ''
+        ].filter(Boolean).join(' · ') : '';
+        var epIdQ = escHtml(l.episodeId);
+        var epCid = 'epc-' + epIdQ;
+        var online = STATE.editEpOnline[l.episodeId] || '上架';
+        var coverVal = STATE.editEpCovers[l.episodeId] || '';
+        var onlineSelect = '<select class="input ep-online" data-ep="' + epIdQ + '" onchange="STATE.editEpOnline[\'' + epIdQ + '\']=this.value">' +
+          '<option value="上架"' + (online === '上架' ? ' selected' : '') + '>上架</option>' +
+          '<option value="下架"' + (online === '下架' ? ' selected' : '') + '>下架</option>' +
+          '</select>';
+        return '<div class="episode-edit-row" data-ep="' + epIdQ + '">' +
+          '<div class="episode-edit-head">' +
+            '<span class="ep-seq-label">序号</span>' +
+            '<input class="input ep-seq" type="number" min="1" value="' + l.seq + '">' +
+            '<span class="mono-badge">' + epIdQ + '</span>' +
+            '<span class="episode-edit-file">' + escHtml(fn) + '</span>' +
+            '<span class="ep-online-label">上下架</span>' + onlineSelect +
+            '<button class="episode-del-btn" type="button" onclick="removeEpisodeFromDrama(\'' + epIdQ + '\')" title="删除该剧集"><i data-icon="trash-2"></i></button>' +
+          '</div>' +
+          '<div class="ep-field"><label class="form-label">标题</label><input class="input ep-title" type="text" value="' + escHtml(l.title || '') + '" placeholder="剧集标题"></div>' +
+          '<div class="ep-field"><label class="form-label">描述（选填）</label><input class="input ep-desc" type="text" value="' + escHtml(l.description || '') + '" placeholder="剧集描述"></div>' +
+          '<div class="ep-cover-edit"><label class="form-label">封面图</label><div class="ep-cover-wrap">' +
+            '<input type="hidden" class="ep-cover-hidden" id="' + epCid + '" value="' + escHtml(coverVal) + '">' +
+            '<div class="ep-cover-preview" id="' + epCid + '_preview">' + epCoverThumbHtml(coverVal) + '</div>' +
+            '<div class="ep-cover-actions">' +
+              '<input type="file" accept="image/*" id="' + epCid + '_file" style="display:none" onchange="epCoverUpload(\'' + epIdQ + '\', this)">' +
+              '<button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById(\'' + epCid + '_file\').click()"><i data-icon="upload"></i>更换图片</button>' +
+              '<button class="btn btn-ghost btn-sm" type="button" onclick="epCoverRemove(\'' + epIdQ + '\')"><i data-icon="trash-2"></i>删除</button>' +
+            '</div>' +
+          '</div></div>' +
+          '<div class="ep-specs">视频规格（系统生成）：' + escHtml(spec || '—') + '</div>' +
+          '</div>';
+      }).join('');
+      if (!links.length) rows = '<div class="empty-state" style="padding:var(--space-4)"><span class="empty-title">暂无关联剧集</span></div>';
+
+      var searchPanel = '';
+      if (STATE.epSearchOpen) {
+        searchPanel = '<div class="ep-search-panel">' +
+          '<div class="toolbar"><div class="input"><i data-icon="search"></i>' +
+          '<input class="input-control" id="ep-search-kw" type="text" placeholder="搜索剧集名称 / ID" value="' + escHtml(STATE.epSearchKw || '') + '" oninput="renderEpisodeSearch()">' +
+          '</div></div>' +
+          '<div class="ep-search-list" id="ep-search-list"></div>' +
+          '</div>';
+      }
+
+      box.innerHTML =
+        '<div class="section-title">剧集列表<span class="badge">' + links.length + ' 集</span></div>' +
+        '<div class="episode-add-bar"><button class="btn btn-secondary btn-md" type="button" onclick="toggleEpisodeSearch()"><i data-icon="' + (STATE.epSearchOpen ? 'x' : 'plus') + '"></i>' + (STATE.epSearchOpen ? '收起' : '添加') + '</button>' +
+        (STATE.epSearchOpen ? '' : '<span class="form-hint" style="margin-left:8px;">从剧集管理搜索并选择剧集添加</span>') + '</div>' +
+        searchPanel + rows;
+      injectIcons();
+      if (STATE.epSearchOpen) renderEpisodeSearch();
+    }
+
+    function toggleEpisodeSearch() {
+      STATE.epSearchOpen = !STATE.epSearchOpen;
+      if (STATE.epSearchOpen) STATE.epSearchKw = '';
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === STATE.editingId; });
+      var d = r ? dramaById(r.dramaId) : null;
+      if (d) renderEpisodeSection(d);
+    }
+
+    function renderEpisodeSearch() {
+      var kwEl = document.getElementById('ep-search-kw');
+      var kw = kwEl ? kwEl.value.trim() : '';
+      STATE.epSearchKw = kw;
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === STATE.editingId; });
+      if (!r) return;
+      var existing = linksForDrama(r.dramaId).map(function (l) { return l.episodeId; });
+      var list = (DB.episodes || []).filter(function (e) { return existing.indexOf(e.id) === -1; });
+      if (kw) list = list.filter(function (e) { return e.fileName.indexOf(kw) > -1 || e.id.indexOf(kw) > -1; });
+      var specOf = function (e) {
+        return [e.definition, (e.width && e.height) ? (e.width + '×' + e.height) : '', e.size].filter(Boolean).join(' · ');
+      };
+      var html = list.map(function (e) {
+        return '<div class="ep-search-item" onclick="addEpisodeToDrama(\'' + escHtml(e.id) + '\')">' +
+          '<span class="ep-search-cover" style="background:' + escHtml(e.cover || '#CBD6DF') + '">' + escHtml((e.fileName || '剧').charAt(0)) + '</span>' +
+          '<div class="ep-search-main"><div class="ep-search-title">' + escHtml(e.fileName) + '</div>' +
+          '<div class="ep-search-sub">' + escHtml(e.id + (specOf(e) ? ' · ' + specOf(e) : '')) + '</div></div>' +
+          '<span class="ep-search-add"><i data-icon="plus"></i>添加</span>' +
+          '</div>';
+      }).join('');
+      if (!list.length) html = '<div class="empty-state" style="padding:var(--space-4)"><span class="empty-title">没有可添加的剧集</span></div>';
+      var listEl = document.getElementById('ep-search-list');
+      if (listEl) { listEl.innerHTML = html; injectIcons(); }
+    }
+
+    function addEpisodeToDrama(epId) {
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === STATE.editingId; });
+      if (!r) return;
+      if (!epId) return;
+      if (linkFor(r.dramaId, epId)) { toast('该剧集已关联'); return; }
+      var ep = episodeById(epId);
+      var existing = linksForDrama(r.dramaId);
+      var nextSeq = existing.length ? Math.max.apply(null, existing.map(function (l) { return l.seq; })) + 1 : 1;
+      DB.episodeLinks.push({ dramaId: r.dramaId, episodeId: epId, seq: nextSeq, title: ep ? ep.fileName.replace(/\.[^.]+$/, '') : '', description: '' });
+      toast('已添加剧集');
+      var d = dramaById(r.dramaId);
+      if (d) renderEpisodeSection(d);
+    }
+
+    function removeEpisodeFromDrama(epId) {
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === STATE.editingId; });
+      if (!r) return;
+      var idx = DB.episodeLinks.findIndex(function (l) { return l.dramaId === r.dramaId && l.episodeId === epId; });
+      if (idx > -1) DB.episodeLinks.splice(idx, 1);
+      toast('已移除剧集');
+      var d = dramaById(r.dramaId);
+      if (d) renderEpisodeSection(d);
+    }
+
+    /* 姓名类标签输入组件（制片人/导演/主要演员）：回车形成一个标签 */
+    function renderTagInput(key) {
+      var box = document.getElementById('ef-' + key);
+      if (!box) return;
+      var list = (STATE.editTagFields && STATE.editTagFields[key]) || [];
+      box.innerHTML =
+        '<div class="tag-multi">' +
+          list.map(function (t, i) {
+            return '<span class="chip chip-tag">' + escHtml(t) +
+              '<button type="button" class="chip-x" onclick="tagInputRemove(\'' + key + '\',' + i + ')" title="删除"><i data-icon="x"></i></button></span>';
+          }).join('') +
+        '</div>' +
+        '<input class="input tag-input-box" type="text" data-key="' + escHtml(key) + '" placeholder="输入名称后按回车添加" onkeydown="tagInputKeydown(event, this)">';
+      if (!list.length) {
+        box.querySelector('.tag-multi').classList.add('is-empty');
+      }
+      injectIcons();
+    }
+    function tagInputKeydown(ev, input) {
+      if (ev.key === 'Enter' || ev.key === 'Tab') {
+        ev.preventDefault();
+        tagInputCommit(input);
+      }
+    }
+    function tagInputCommit(input) {
+      var key = input.getAttribute('data-key');
+      var v = (input.value || '').trim();
+      if (!v) return;
+      STATE.editTagFields = STATE.editTagFields || {};
+      STATE.editTagFields[key] = STATE.editTagFields[key] || [];
+      if (STATE.editTagFields[key].indexOf(v) === -1) STATE.editTagFields[key].push(v);
+      input.value = '';
+      renderTagInput(key);
+    }
+    function tagInputRemove(key, idx) {
+      STATE.editTagFields = STATE.editTagFields || {};
+      if (STATE.editTagFields[key]) STATE.editTagFields[key].splice(idx, 1);
+      renderTagInput(key);
+    }
+
+    /* 跳转链接显隐跟随短剧类型 */
+    function refreshJumpLink() {
+      var wrap = document.getElementById('jump-link-wrap');
+      if (!wrap) return;
+      var dt = STATE.editDramaType || '普通短剧';
+      wrap.style.display = (dt === '快应用短剧') ? '' : 'none';
+    }
+
+    /* 剧集封面图：更换 / 删除 */
+    function epCoverUpload(epId, input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        STATE.editEpCovers = STATE.editEpCovers || {};
+        STATE.editEpCovers[epId] = e.target.result;
+        var pv = document.getElementById('epc-' + epId + '_preview');
+        if (pv) pv.innerHTML = '<img class="ep-cover-img" src="' + e.target.result + '" alt="">';
+        toast('剧集封面图已更新');
+      };
+      reader.readAsDataURL(file);
+    }
+    function epCoverRemove(epId) {
+      STATE.editEpCovers = STATE.editEpCovers || {};
+      STATE.editEpCovers[epId] = '';
+      var pv = document.getElementById('epc-' + epId + '_preview');
+      if (pv) { pv.innerHTML = '<span class="cover-swatch empty"><i data-icon="image"></i></span>'; injectIcons(); }
+      var el = document.getElementById('epc-' + epId);
+      if (el) el.value = '';
+      toast('剧集封面图已删除');
+    }
+
+    /* 封面图附件：更换 / 删除 */
+    function coverUpload(id, input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var url = e.target.result;
+        var el = document.getElementById(id);
+        if (el) el.value = url;
+        var pv = document.getElementById(id + '_preview');
+        if (pv) pv.innerHTML = '<img class="cover-thumb-img" src="' + url + '" alt="">';
+        toast('封面图已更新');
+      };
+      reader.readAsDataURL(file);
+    }
+    function coverRemove(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+      var pv = document.getElementById(id + '_preview');
+      if (pv) pv.innerHTML = '<div class="cover-thumb empty"><i data-icon="image"></i><span>暂无封面图</span></div>';
+      injectIcons();
+      toast('封面图已删除');
+    }
+
+    /* 渲染只读字段行 */
+    function readonlyFieldHtml(f, d, r) {
+      var val = editFieldValue(f, d, r);
+      var disp = val;
+      if (f.key === 'status') disp = statusTag(r.platform, r.status);
+      return '<div class="form-field"><label class="form-label">' + escHtml(f.label) + '</label>' +
+        '<span class="form-static">' + disp + '</span></div>';
+    }
+
+    function openEdit(id) {
+      STATE.editingId = id;
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === id; });
+      if (!r) return;
+      var d = dramaById(r.dramaId);
+      document.getElementById('edit-title').textContent = '修改信息 · ' + (d ? d.title : r.dramaId) + ' @ ' + platformName(r.platform);
+
+      /* 目前只对 OPPO 做完整字段编辑；其他平台沿用简单字段渲染 */
+      if (r.platform === 'oppo') {
+        var html = '<div class="alert alert-info" style="margin-bottom:var(--space-4)"><i data-icon="info"></i><span>编辑该平台全量字段与关联剧集后保存，将重新推送并同步最新状态。</span></div>';
+        html += '<div class="edit-groups">';
+        OPPO_EDIT_GROUPS.forEach(function (g) {
+          html += '<div class="edit-group"><div class="edit-group-title"><i data-icon="' + g.icon + '"></i><span>' + g.group + '</span></div>';
+          html += '<div class="form-grid">';
+          g.fields.forEach(function (f) {
+            html += (f.target === 'readonly') ? readonlyFieldHtml(f, d, r) : editFieldHtml(f, d, r);
+          });
+          html += '</div></div>';
+        });
+        html += '<div id="ep-section" class="episode-edit-section"></div>';
+        html += '</div>';
+        document.getElementById('edit-body').innerHTML = html;
+        renderEpisodeSection(d);
+        /* 初始化标签多选（分类）与姓名标签输入（制片人/导演/主要演员） */
+        var tagBox = document.getElementById('ef-tags');
+        if (tagBox) makeTagPicker('ef-tags', ALIPAY_TAGS, STATE.editTags, function () {});
+        ['producer', 'director', 'actors'].forEach(function (k) {
+          if (document.getElementById('ef-' + k)) renderTagInput(k);
+        });
+        injectIcons();
+      } else {
+        var info = distStatusInfo(r.platform, r.status);
+        var fields = platformSpecialFields(r.platform);
+        var h2 = '<div class="alert alert-info" style="margin-bottom:var(--space-4)"><i data-icon="info"></i><span>修改该平台特有字段后提交，将重新推送并同步最新状态。</span></div>';
+        h2 += '<div style="display:flex;flex-direction:column;gap:var(--space-3)">';
+        h2 += '<div class="form-field"><label class="form-label">当前状态</label><span>' + statusTag(r.platform, r.status) + '</span></div>';
+        fields.forEach(function (f) {
+          var note = f.note ? '<div class="form-hint">' + escHtml(f.note) + '</div>' : '';
+          h2 += '<div class="form-field"><label class="form-label">' + escHtml(f.label) + (f.required ? '<span class="req">*</span>' : '') + '</label>' +
+            '<input class="input" type="text" placeholder="请填写 ' + escHtml(f.label) + '" value="">' + note + '</div>';
+        });
+        h2 += '</div>';
+        document.getElementById('edit-body').innerHTML = h2;
+      }
+      openDrawer('edit-drawer');
+      document.getElementById('edit-backdrop').hidden = false;
+      injectIcons();
+    }
+
+    function closeEdit() {
+      STATE.editingId = null;
+      closeDrawer('edit-drawer');
+      document.getElementById('edit-backdrop').hidden = true;
+    }
+
+    function saveEdit() {
+      var r = (DB.distributionRecords || []).find(function (x) { return x.id === STATE.editingId; });
+      if (!r) { toast('记录不存在'); return; }
+      var d = dramaById(r.dramaId);
+      var now = new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
+
+      if (r.platform === 'oppo' && d) {
+        r.extra = r.extra || {};
+        OPPO_EDIT_GROUPS.forEach(function (g) {
+          g.fields.forEach(function (f) {
+            if (f.target !== 'drama' && f.target !== 'extra') return;
+            if (f.key === 'contentL1') return; /* 一级分类由二级反推，无需落库 */
+            if (f.control === 'tags') { d.tags = (STATE.editTags || []).slice(); return; }
+            if (f.control === 'tag-input') {
+              var tv = (STATE.editTagFields && STATE.editTagFields[f.key]) || [];
+              d[f.key] = tv.filter(function (x) { return x && String(x).trim(); }).join('、');
+              return;
+            }
+            var id = 'ef-' + f.key;
+            var el = document.getElementById(id);
+            var v = el ? el.value : '';
+            if (f.control === 'radio') {
+              var picked = document.querySelector('input[name="' + id + '"]:checked');
+              v = picked ? picked.value : (f.default || '');
+            }
+            if (f.control === 'color') {
+              var hexEl = document.getElementById(id + '_hex');
+              v = hexEl ? hexEl.value : v;
+            }
+            if (f.target === 'drama') {
+              if (f.key === 'tags') d[f.key] = v.split(/[、,，\s]+/).filter(Boolean);
+              else if (f.control === 'number') d[f.key] = v === '' ? 0 : Number(v);
+              else if (f.key === 'investment') { d.investment = Number(v) || 0; d.productionCost = v === '' ? null : (v + '万'); }
+              else d[f.key] = v;
+            } else {
+              r.extra[f.key] = v;
+            }
+          });
+        });
+        /* 跳转链接仅快应用短剧保留 */
+        var dtPicked = document.querySelector('input[name="ef-dramaType"]:checked');
+        r.extra.jumpLink = (dtPicked && dtPicked.value === '快应用短剧') ? (r.extra.jumpLink || '') : '';
+        /* 保存剧集标题/序号/上下架/封面 */
+        document.querySelectorAll('.episode-edit-row').forEach(function (rowNode) {
+          var epId = rowNode.getAttribute('data-ep');
+          var link = linkFor(r.dramaId, epId);
+          if (!link) return;
+          var sqEl = rowNode.querySelector('.ep-seq');
+          var tEl = rowNode.querySelector('.ep-title');
+          var ddEl = rowNode.querySelector('.ep-desc');
+          var onEl = rowNode.querySelector('.ep-online');
+          var cvEl = rowNode.querySelector('.ep-cover-hidden');
+          if (sqEl) link.seq = Number(sqEl.value) || link.seq;
+          if (tEl) link.title = tEl.value;
+          if (ddEl) link.description = ddEl.value;
+          var epObj = episodeById(epId);
+          if (onEl) { STATE.editEpOnline[epId] = onEl.value; if (epObj) epObj.onlineStatus = onEl.value; }
+          if (cvEl) { STATE.editEpCovers[epId] = cvEl.value || ''; if (epObj) epObj.cover = cvEl.value || ''; }
+        });
+      }
+
+      r.updatedAt = now;
+      closeEdit();
+      toast('信息已更新，已重新同步');
+      loadRecords();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var q = new URLSearchParams(location.search).get('platform');
+      if (q && DIST_STATUS[q]) STATE.platform = q;
+      renderTabs();
+      renderStatusFilter();
+      renderStats();
+      renderTable();
+    });
+  </script>
+</body>
+</html>

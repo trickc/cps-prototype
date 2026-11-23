@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>剧集管理 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="episodes">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">短剧剧库 / <b>剧集管理</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">剧集管理</h1>
+          <p class="page-desc">全局剧集清单：统一维护所有短剧的剧集级字段，视频文件取自媒资库，并按「第n集」自动归集集数。</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn btn-ghost btn-md" id="btn-back-all" href="episodes.html" style="display:none;"><i data-icon="arrow-left"></i>返回全部剧集</a>
+          <a class="btn btn-primary btn-md" href="episodes-add.html"><i data-icon="cloud-upload"></i>新增剧集</a>
+        </div>
+      </div>
+
+      <div class="panel reveal" id="drama-banner" style="display:none; margin-bottom: var(--space-4);">
+        <div class="panel-body" style="display:flex; align-items:center; gap: var(--space-3); padding: var(--space-3) var(--space-5);">
+          <span class="tag tag-primary" id="drama-banner-title"></span>
+          <span class="form-hint" id="drama-banner-count"></span>
+          <span class="spacer"></span>
+          <span class="form-hint">仅展示该短剧关联的剧集</span>
+        </div>
+      </div>
+
+      <div class="stat-grid reveal" id="stat-grid"></div>
+
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="film"></i>剧集清单</div>
+          <span class="tag tag-neutral" id="result-count">共 0 集</span>
+        </div>
+        <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-faint);">
+          <div class="toolbar">
+            <select class="input" id="assoc-filter" onchange="renderAssocControls(); loadList()">
+              <option value="all">关联短剧：全部</option>
+              <option value="assigned">已关联短剧</option>
+              <option value="none">未关联短剧</option>
+            </select>
+            <div class="input" id="kw-drama-wrap" style="display:none;">
+              <i data-icon="search"></i>
+              <input class="input-control" id="kw-drama" type="text" placeholder="搜索短剧名称" oninput="loadList()">
+            </div>
+            <div class="input">
+              <i data-icon="search"></i>
+              <input class="input-control" id="kw-file" type="text" placeholder="搜索文件名" oninput="loadList()">
+            </div>
+            <select class="input" id="transcode-filter" onchange="loadList()">
+              <option value="all">全部转码状态</option>
+              <option value="执行成功">执行成功</option>
+              <option value="执行中">执行中</option>
+              <option value="执行失败">执行失败</option>
+              <option value="超时">超时</option>
+              <option value="取消">取消</option>
+            </select>
+            <select class="input" id="status-filter" onchange="loadList()">
+              <option value="all">全部视频状态</option>
+              <option value="启用">启用</option>
+              <option value="禁用">禁用</option>
+            </select>
+            <button class="btn btn-ghost btn-md" onclick="resetFilter()">重置</button>
+            <span class="spacer"></span>
+            <span class="form-hint">集数以文件名末尾「第n集」自动识别</span>
+          </div>
+          <div class="toolbar" id="batch-bar" style="margin-top: var(--space-3); border-top: 1px dashed var(--border-faint); padding-top: var(--space-3);">
+            <span class="form-hint" id="batch-count-hint">已选 0 集</span>
+            <select class="input" id="batch-status" style="width:auto;">
+              <option value="启用">视频状态：设为「启用」</option>
+              <option value="禁用">视频状态：设为「禁用」</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="applyBatchStatus()">批量切换视频状态</button>
+            <select class="input" id="batch-orientation" style="width:auto;">
+              <option value="竖视频">横竖版：设为「竖视频」</option>
+              <option value="横视频">横竖版：设为「横视频」</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="applyBatchOrientation()">批量切换横竖版</button>
+            <span class="spacer"></span>
+            <span class="form-hint">勾选后可批量操作；点击「横/竖版」「视频状态」标签可单集切换</span>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead id="ep-thead"></thead>
+            <tbody id="ep-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="pg-info">共 0 集</span>
+          <div class="pg-btns"><button class="pg-btn">‹</button><button class="pg-btn active">1</button><button class="pg-btn">›</button></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script>
+    function fmtDur(s) {
+      return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }
+    function transcodeClass(s) {
+      if (s === '执行成功') return 'tag-success';
+      if (s === '执行中') return 'tag-info';
+      if (s === '执行失败') return 'tag-error';
+      if (s === '超时') return 'tag-warning';
+      return 'tag-neutral';
+    }
+    function videoStatusClass(s) {
+      return s === '启用' ? 'tag-primary' : 'tag-neutral';
+    }
+    function orientationClass(s) {
+      return s === '竖视频' ? 'tag-info' : 'tag-neutral';
+    }
+
+    var presetDramaId = null;   // 有值 = 短剧维度视图；null = 全局媒资视图
+    var selectedEpisodes = {};  // 勾选集，{ episodeId: true }
+    var currentListEps = [];    // 当前渲染的列表（用于全选）
+
+    function isDramaView() { return !!presetDramaId; }
+
+    function updateBatchBar() {
+      var n = Object.keys(selectedEpisodes).length;
+      document.getElementById('batch-count-hint').textContent = '已选 ' + n + ' 集';
+    }
+
+    function syncHeadCheck() {
+      var head = document.querySelector('.head-check');
+      if (!head) return;
+      var rows = currentListEps;
+      head.checked = rows.length > 0 && rows.every(function (e) { return selectedEpisodes[e.id]; });
+      head.indeterminate = !head.checked && rows.some(function (e) { return selectedEpisodes[e.id]; });
+    }
+
+    function toggleSelect(id) {
+      if (selectedEpisodes[id]) delete selectedEpisodes[id]; else selectedEpisodes[id] = true;
+      updateBatchBar();
+      syncHeadCheck();
+    }
+
+    function toggleSelectAll(checked) {
+      selectedEpisodes = {};
+      if (checked) currentListEps.forEach(function (e) { selectedEpisodes[e.id] = true; });
+      document.querySelectorAll('.row-check').forEach(function (cb) { cb.checked = !!selectedEpisodes[cb.getAttribute('data-id')]; });
+      updateBatchBar();
+      syncHeadCheck();
+    }
+
+    function toggleVideoStatus(id) {
+      var e = episodeById(id);
+      if (!e) return;
+      e.videoStatus = e.videoStatus === '启用' ? '禁用' : '启用';
+      renderStats();
+      loadList();
+    }
+
+    function toggleOrientation(id) {
+      var e = episodeById(id);
+      if (!e) return;
+      var next = e.orientation === '竖视频' ? '横视频' : '竖视频';
+      e.orientation = next;
+      var w = next === '竖视频' ? 720 : 1280;
+      var h = next === '竖视频' ? 1280 : 720;
+      e.width = w; e.height = h;
+      loadList();
+    }
+
+    function applyBatchStatus() {
+      var target = document.getElementById('batch-status').value;
+      var ids = Object.keys(selectedEpisodes);
+      if (!ids.length) { toast('请先勾选要操作的剧集'); return; }
+      ids.forEach(function (id) { var e = episodeById(id); if (e) e.videoStatus = target; });
+      var n = ids.length;
+      selectedEpisodes = {};
+      updateBatchBar();
+      renderStats();
+      loadList();
+      toast('已将 ' + n + ' 集切换为「' + target + '」');
+    }
+
+    function applyBatchOrientation() {
+      var target = document.getElementById('batch-orientation').value;
+      var ids = Object.keys(selectedEpisodes);
+      if (!ids.length) { toast('请先勾选要操作的剧集'); return; }
+      ids.forEach(function (id) {
+        var e = episodeById(id);
+        if (!e) return;
+        e.orientation = target;
+        e.width = target === '竖视频' ? 720 : 1280;
+        e.height = target === '竖视频' ? 1280 : 720;
+      });
+      var n = ids.length;
+      selectedEpisodes = {};
+      updateBatchBar();
+      loadList();
+      toast('已将 ' + n + ' 集切换为「' + target + '」');
+    }
+
+    function statCard(icon, label, val, foot) {
+      return '<div class="stat-card"><div class="stat-label"><i data-icon="' + icon + '"></i>' + label + '</div>' +
+        '<div class="stat-value">' + val + '</div><div class="stat-foot">' + foot + '</div></div>';
+    }
+
+    function renderStats() {
+      var grid = document.getElementById('stat-grid');
+      var eps = isDramaView()
+        ? DB.episodes.filter(function (e) { return dramasForEpisode(e.id).indexOf(presetDramaId) > -1; })
+        : DB.episodes;
+      grid.innerHTML =
+        statCard('film', isDramaView() ? '本短剧剧集数' : '总剧集数', eps.length, isDramaView() ? '该短剧关联的剧集' : '媒资文件统一归集') +
+        statCard('refresh-cw', '转码待处理', eps.filter(function (e) { return e.transcode !== '执行成功'; }).length, '执行中 / 失败 / 超时 / 取消') +
+        statCard('check-circle', '已启用', eps.filter(function (e) { return e.videoStatus === '启用'; }).length, '可分发剧集');
+      injectIcons();
+    }
+
+    function renderHead() {
+      var th = document.getElementById('ep-thead');
+      var selTh = '<th style="width:36px; text-align:center;"><input type="checkbox" class="head-check" onchange="toggleSelectAll(this.checked)" title="全选当前列表"></th>';
+      th.innerHTML = isDramaView()
+        ? '<tr>' + selTh + '<th>剧集ID</th><th style="width:52px">集数</th><th>剧集标题</th><th>封面</th><th>视频文件</th><th>时长</th><th>大小</th><th>转码状态</th><th>横/竖版</th><th>视频状态</th><th style="text-align:right">操作</th></tr>'
+        : '<tr>' + selTh + '<th>剧集ID</th><th>关联短剧</th><th>视频文件</th><th>时长</th><th>大小</th><th>转码状态</th><th>横/竖版</th><th>视频状态</th><th style="text-align:right">操作</th></tr>';
+    }
+
+    function renderAssocControls() {
+      var assocEl = document.getElementById('assoc-filter');
+      var dramaWrap = document.getElementById('kw-drama-wrap');
+      if (isDramaView()) {
+        assocEl.style.display = 'none';
+        dramaWrap.style.display = 'none';
+        return;
+      }
+      assocEl.style.display = '';
+      var assoc = assocEl.value;
+      dramaWrap.style.display = assoc === 'assigned' ? '' : 'none';
+      if (assoc !== 'assigned') document.getElementById('kw-drama').value = '';
+    }
+
+    function renderBanner() {
+      var banner = document.getElementById('drama-banner');
+      var back = document.getElementById('btn-back-all');
+      if (isDramaView()) {
+        var d = dramaById(presetDramaId);
+        banner.style.display = 'block';
+        document.getElementById('drama-banner-title').textContent = d ? d.title : presetDramaId;
+        var n = DB.episodes.filter(function (e) { return dramasForEpisode(e.id).indexOf(presetDramaId) > -1; }).length;
+        document.getElementById('drama-banner-count').textContent = '共 ' + n + ' 集';
+        back.style.display = '';
+        document.querySelector('.crumb b').textContent = '剧集管理 · ' + (d ? d.title : presetDramaId);
+        document.querySelector('.page-title').textContent = (d ? d.title : presetDramaId) + ' · 剧集管理';
+        document.querySelector('.page-desc').textContent = '仅展示该短剧关联的剧集；剧集标题与集数在「新建短剧 → 关联剧集」中维护。';
+      } else {
+        banner.style.display = 'none';
+        back.style.display = 'none';
+      }
+    }
+
+    function renderRows(list) {
+      currentListEps = list;
+      var tb = document.getElementById('ep-tbody');
+      document.getElementById('result-count').textContent = '共 ' + list.length + ' 集';
+      document.getElementById('pg-info').textContent = '共 ' + list.length + ' 集';
+      var colCount = isDramaView() ? 12 : 10;
+      if (!list.length) {
+        tb.innerHTML = '<tr><td colspan="' + colCount + '"><div class="empty-state"><i data-icon="search"></i><span class="empty-title">未找到匹配的剧集</span></div></td></tr>';
+        injectIcons();
+        return;
+      }
+      tb.innerHTML = list.map(function (e) {
+        var selCell = '<td style="text-align:center;"><input type="checkbox" class="row-check" data-id="' + e.id + '" ' + (selectedEpisodes[e.id] ? 'checked' : '') + ' onchange="toggleSelect(\'' + e.id + '\')"></td>';
+        var fileCell = '<td><div class="cell-stack"><span class="cell-title">' + e.fileName + '</span><span class="cell-sub mono-badge">' + e.definition + ' · ' + e.width + '×' + e.height + '</span></div></td>';
+        var durCell = '<td class="num">' + fmtDur(e.duration) + '</td>';
+        var sizeCell = '<td class="num">' + e.size + '</td>';
+        var tcCell = '<td><span class="tag ' + transcodeClass(e.transcode) + '">' + e.transcode + '</span></td>';
+        var orient = e.orientation || '竖视频';
+        var orientCell = '<td><button class="vs-toggle" onclick="toggleOrientation(\'' + e.id + '\')" title="点击切换横/竖版"><span class="tag ' + orientationClass(orient) + '">' + orient + '</span></button></td>';
+        var vsCell = '<td><button class="vs-toggle" onclick="toggleVideoStatus(\'' + e.id + '\')" title="点击切换视频状态"><span class="tag ' + videoStatusClass(e.videoStatus) + '">' + e.videoStatus + '</span></button></td>';
+        var opsCell = '<td style="text-align:right; white-space:nowrap;"><a class="link-action" onclick="toast(\'预览\')">预览</a></td>';
+        var idCell = '<td><span class="mono-badge">' + e.id + '</span></td>';
+        if (isDramaView()) {
+          var link = linkFor(presetDramaId, e.id);
+          var seq = link ? link.seq : e.seq;
+          var title = link && link.title ? link.title : '第' + seq + '集';
+          return '<tr>' + selCell +
+            idCell +
+            '<td class="num">' + seq + '</td>' +
+            '<td><span class="cell-title">' + title + '</span></td>' +
+            '<td><span class="poster-thumb sq" style="background:' + e.cover + '">' + (e.fileName || e.id).charAt(0) + '</span></td>' +
+            fileCell + durCell + sizeCell + tcCell + orientCell + vsCell + opsCell +
+            '</tr>';
+        }
+        var dids = dramasForEpisode(e.id);
+        var dramaCell = dids.length
+          ? dids.map(function (did) { var d = dramaById(did); return '<a class="link-action" href="episodes.html?drama=' + did + '">' + (d ? d.title : did) + '</a>'; }).join('<span class="cell-sub">、</span>')
+          : '<span class="cell-sub">未关联</span>';
+        return '<tr>' + selCell + idCell + '<td>' + dramaCell + '</td>' + fileCell + durCell + sizeCell + tcCell + orientCell + vsCell + opsCell + '</tr>';
+      }).join('');
+      injectIcons();
+      syncHeadCheck();
+    }
+
+    function loadList() {
+      var file = document.getElementById('kw-file').value.trim();
+      var tc = document.getElementById('transcode-filter').value;
+      var vs = document.getElementById('status-filter').value;
+      var list = DB.episodes.slice();
+      if (isDramaView()) {
+        list = list.filter(function (e) { return dramasForEpisode(e.id).indexOf(presetDramaId) > -1; });
+      } else {
+        var assoc = document.getElementById('assoc-filter').value;
+        var dramaKw = document.getElementById('kw-drama').value.trim();
+        if (assoc === 'assigned') {
+          list = list.filter(function (e) { return dramasForEpisode(e.id).length > 0; });
+          if (dramaKw) list = list.filter(function (e) {
+            return dramasForEpisode(e.id).some(function (did) {
+              var d = dramaById(did);
+              return d && (d.title.indexOf(dramaKw) > -1 || d.id.indexOf(dramaKw) > -1);
+            });
+          });
+        } else if (assoc === 'none') {
+          list = list.filter(function (e) { return dramasForEpisode(e.id).length === 0; });
+        }
+      }
+      if (tc !== 'all') list = list.filter(function (e) { return e.transcode === tc; });
+      if (vs !== 'all') list = list.filter(function (e) { return e.videoStatus === vs; });
+      if (file) list = list.filter(function (e) { return e.fileName.indexOf(file) > -1; });
+      renderRows(list);
+    }
+
+    function resetFilter() {
+      document.getElementById('kw-file').value = '';
+      document.getElementById('transcode-filter').value = 'all';
+      document.getElementById('status-filter').value = 'all';
+      document.getElementById('assoc-filter').value = 'all';
+      document.getElementById('kw-drama').value = '';
+      renderAssocControls();
+      loadList();
+      toast('筛选条件已重置');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var q = new URLSearchParams(location.search).get('drama');
+      presetDramaId = q || null;
+      renderHead();
+      renderBanner();
+      renderStats();
+      renderAssocControls();
+      loadList();
+    });
+  </script>
+</body>
+</html>

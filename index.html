@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>短剧剧库 · CPS 内容中台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="library">
+  <aside class="app-nav">
+    <div class="nav-brand">
+      <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
+      <span class="nav-brand-text">
+        <span class="nav-brand-title">短剧剧库</span>
+        <span class="nav-brand-sub">CPS 内容归口</span>
+      </span>
+    </div>
+    <nav class="nav-menu">
+      <div class="nav-group-label">短剧管理</div>
+      <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <div class="nav-group-label sub">分发</div>
+      <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
+      <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
+      <div class="nav-group-label">内容管理</div>
+      <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
+      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
+      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
+      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
+      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
+      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
+      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <button type="button" class="nav-collapse-head">
+        <span>不做了</span>
+        <i data-icon="chevron-down" class="nav-collapse-caret"></i>
+      </button>
+      <div class="nav-collapse-body">
+        <div class="nav-group-label sub">剧库</div>
+        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
+        <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
+      </div>
+      </nav>
+    <div class="nav-foot">
+      <strong>CPS 内容中台</strong>
+      <span>公共短剧库 · v1.0</span>
+    </div>
+  </aside>
+
+  <main class="app-content">
+    <header class="app-topbar">
+      <div class="crumb">内容中台 / <b>短剧剧库</b></div>
+      <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
+    </header>
+
+    <div class="page">
+      <div class="page-head reveal">
+        <div>
+          <h1 class="page-title">短剧剧库</h1>
+          <p class="page-desc">公司短剧内容的统一归口：一套完整字段一次录入，分发到任意平台时一键补齐、极少重复填写。</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn btn-primary btn-md" href="create.html"><i data-icon="plus"></i>新建短剧</a>
+          <button class="btn btn-secondary btn-md" onclick="exportList()"><i data-icon="download"></i>导出</button>
+        </div>
+      </div>
+
+      <div class="stat-grid reveal">
+        <div class="stat-card">
+          <div class="stat-label"><i data-icon="clapperboard"></i>总短剧数</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-foot">跨 7 个平台统一归口</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label"><i data-icon="send"></i>已分发短剧</div>
+          <div class="stat-value" id="stat-distributed">—</div>
+          <div class="stat-foot">至少分发 1 个平台</div>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="list"></i>短剧清单</div>
+          <span class="tag tag-neutral" id="result-count">共 0 条</span>
+        </div>
+        <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-faint);">
+          <div class="toolbar">
+            <div class="input">
+              <i data-icon="search"></i>
+              <input class="input-control" id="kw" type="text" placeholder="搜索短剧名称 / ID">
+            </div>
+            <select class="input" id="platform-filter">
+              <option value="">全部分发平台</option>
+              <option value="__none__">尚未分发</option>
+            </select>
+            <button class="btn btn-secondary btn-md" onclick="loadList()"><i data-icon="search"></i>搜索</button>
+            <button class="btn btn-ghost btn-md" onclick="resetFilter()">重置</button>
+            <span class="spacer"></span>
+          </div>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>短剧名称</th>
+                <th>内容分类</th>
+                <th>首发平台</th>
+                <th>合作剧类型</th>
+                <th>收费卡点集数 / 总集数</th>
+                <th>更新状态</th>
+                <th>已分发平台</th>
+                <th style="text-align:right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="drama-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <span id="pg-info">第 1 页</span>
+          <div class="pg-btns">
+            <button class="pg-btn">‹</button>
+            <button class="pg-btn active">1</button>
+            <button class="pg-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="components.js"></script>
+  <script src="mock.js"></script>
+  <script src="api.js"></script>
+  <script>
+    function platformName(k) {
+      var p = PLATFORMS.find(function (x) { return x.key === k; });
+      return p ? p.name : k;
+    }
+
+    /* 内容分类：根据 shortplayType（内容子分类）反查一级分类，展示「一级-子分类」 */
+    function contentCategoryLabel(d) {
+      var st = d.shortplayType || '';
+      var l1 = '';
+      Object.keys(CONTENT_CATEGORIES).forEach(function (k) {
+        if (CONTENT_CATEGORIES[k].indexOf(st) > -1) l1 = k;
+      });
+      return l1 ? (l1 + '-' + st) : st;
+    }
+
+    function renderPlatformFilter() {
+      var sel = document.getElementById('platform-filter');
+      sel.innerHTML = '<option value="">全部分发平台</option><option value="__none__">尚未分发</option>' +
+        PLATFORMS.map(function (p) { return '<option value="' + p.key + '">' + p.name + '</option>'; }).join('');
+    }
+
+    function renderStats() {
+      var ds = DB.dramas;
+      var total = ds.length;
+      var distributed = ds.filter(function (d) { return d.platforms.length > 0; }).length;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-distributed').textContent = distributed;
+    }
+
+    function renderRows(list) {
+      var tb = document.getElementById('drama-tbody');
+      document.getElementById('result-count').textContent = '共 ' + list.length + ' 条';
+      if (!list.length) {
+        tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i data-icon="search"></i><span class="empty-title">未找到匹配的短剧</span></div></td></tr>';
+        injectIcons();
+        return;
+      }
+      tb.innerHTML = list.map(function (d) {
+        var badges = d.platforms.slice(0, 3).map(function (p) {
+          return '<span class="platform-badge">' + platformName(p) + '</span>';
+        }).join('');
+        var more = d.platforms.length > 3 ? '<span class="mono-badge">+' + (d.platforms.length - 3) + '</span>' : '';
+        var plat = d.platforms.length ? badges + more : '<span class="cell-sub">尚未分发</span>';
+        var chargeCell = '<div class="cell-stack"><span class="cell-title">' + (d.chargeEpisode || 0) + ' / ' + d.totalEpisodes + '</span>' +
+          '<span class="cell-sub">第 ' + (d.chargeEpisode || 0) + ' 集起付费</span></div>';
+        var debutText = (d.debutPlatforms || []).length ? d.debutPlatforms.join('、') : '—';
+        var coopText = (d.coopTypes || []).length ? d.coopTypes.join('、') : '—';
+        return '<tr>' +
+          '<td><div class="cell-with-poster"><span class="poster-thumb" style="background:' + d.cover + '20; color:' + d.cover + '">' + d.title.charAt(0) + '</span>' +
+            '<div class="cell-stack"><span class="cell-title">' + d.title + '</span>' +
+            '<span class="cell-sub">短剧ID <span class="mono-badge">' + d.id + '</span> · 项目ID <span class="mono-badge">' + (d.project || '—') + '</span></span></div></div></td>' +
+          '<td><div class="cell-stack"><span>' + contentCategoryLabel(d) + '</span></div></td>' +
+          '<td><div class="cell-stack"><span class="cell-title">' + debutText + '</span></div></td>' +
+          '<td><div class="cell-stack"><span class="cell-title">' + coopText + '</span></div></td>' +
+          '<td class="num">' + chargeCell + '</td>' +
+          '<td><span class="tag ' + (d.updateStatus === '已完结' ? 'tag-neutral' : 'tag-primary') + '">' + d.updateStatus + '</span></td>' +
+          '<td>' + plat + '</td>' +
+          '<td style="text-align:right; white-space:nowrap;"><a class="link-action" href="create.html?id=' + d.id + '">编辑</a><a class="link-action" href="distribute.html?id=' + d.id + '">一键分发</a></td>' +
+          '</tr>';
+      }).join('');
+      injectIcons();
+    }
+
+    async function loadList() {
+      var kw = document.getElementById('kw').value.trim();
+      var platform = document.getElementById('platform-filter').value;
+      var tb = document.getElementById('drama-tbody');
+      tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="skeleton" style="width:70%;height:14px"></div><div class="skeleton" style="width:50%;height:14px"></div></div></td></tr>';
+      var res = await API.fetchDramaList({ kw: kw, platform: platform });
+      renderRows(res.data);
+    }
+
+    function csvCell(v) {
+      var s = v == null ? '' : String(v);
+      if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    async function exportList() {
+      var kw = document.getElementById('kw').value.trim();
+      var platform = document.getElementById('platform-filter').value;
+      var res = await API.fetchDramaList({ kw: kw, platform: platform });
+      var list = res.data;
+      if (!list.length) { toast('当前筛选条件下没有可导出的数据'); return; }
+
+      var head = ['短剧ID', '项目ID', '短剧名称', '类型', '题材分类', '首发平台', '合作剧类型', '收费卡点集数', '总集数', '更新状态', '已分发平台'];
+      var rows = list.map(function (d) {
+        var plats = d.platforms.length ? d.platforms.map(platformName).join('、') : '尚未分发';
+        var debut = (d.debutPlatforms || []).join('、') || '—';
+        var coop = (d.coopTypes || []).join('、') || '—';
+        return [d.id, (d.project || '—'), d.title, d.shortplayType, d.category, debut, coop, (d.chargeEpisode || 0), d.totalEpisodes, d.updateStatus, plats];
+      });
+
+      var csv = '\uFEFF' + [head].concat(rows).map(function (r) { return r.map(csvCell).join(','); }).join('\n');
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      var a = document.createElement('a');
+      var url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = '短剧剧库_导出_' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('已导出 ' + list.length + ' 条短剧');
+    }
+
+    function resetFilter() {
+      document.getElementById('kw').value = '';
+      document.getElementById('platform-filter').value = '';
+      loadList();
+      toast('筛选条件已重置');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      renderPlatformFilter();
+      renderStats();
+      loadList();
+    });
+  </script>
+</body>
+</html>
