@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>平台备案管理 · CPS 内容中台</title>
+  <title>备案管理 · CPS 内容中台</title>
   <link rel="stylesheet" href="styles.css">
   <style>
     /* 短剧 × 平台 · 备案材料矩阵 */
@@ -48,19 +48,15 @@
     <nav class="nav-menu">
       <div class="nav-group-label">短剧管理</div>
       <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
-      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>备案管理</span></a>
       <div class="nav-group-label sub">分发</div>
       <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
       <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
       <div class="nav-group-label">内容管理</div>
       <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
-      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
-      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
-      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
-      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
-      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
-      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
-      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <a class="nav-item" data-nav="wechat" href="wechat-content.html"><i data-icon="image"></i><span>微信内容库</span></a>
+      <a class="nav-item" data-nav="douyin" href="douyin-content.html"><i data-icon="image"></i><span>抖音内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>OPPO内容库</span></a>
       <button type="button" class="nav-collapse-head">
         <span>不做了</span>
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
@@ -79,27 +75,28 @@
 
   <main class="app-content">
     <header class="app-topbar">
-      <div class="crumb">短剧管理 / <b>平台备案管理</b></div>
+      <div class="crumb">短剧管理 / <b>备案管理</b></div>
       <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
     </header>
 
     <div class="page">
       <div class="page-head reveal">
         <div>
-          <h1 class="page-title">平台备案管理</h1>
-          <p class="page-desc">短剧列表内每新增一部短剧，本页即按「短剧 × 平台」自动生成各平台所需的备案材料；材料齐备后，依据规则自动分发到对应平台。</p>
+          <h1 class="page-title">备案管理</h1>
+          <p class="page-desc">短剧列表内每新增一部短剧，本页即按「短剧 × 平台」自动生成各平台所需的备案材料；材料齐备后，仅中台推送的短剧自动分发，手动创建的短剧不自动分发，需手动「一键分发」。</p>
         </div>
         <div class="page-actions">
           <span class="tag tag-primary">短剧 × 平台矩阵</span>
         </div>
       </div>
 
-      <div class="alert alert-info reveal"><i data-icon="info"></i><span>当前已落地「支付宝」「抖音小程序」两平台的备案材料规则；其余平台材料规则后续补充。每部短剧对应全部接入平台，已落地平台显示材料字段映射，未落地平台显示「待补充」。</span></div>
+      <div class="alert alert-info reveal"><i data-icon="info"></i><span>当前已落地「抖音小程序」平台的备案材料规则；「微信小程序」材料规则待补充；OPPO端原生渠道无需备案材料，可直接分发。每部短剧对应全部接入平台。</span></div>
 
       <div class="stat-strip reveal">
-        <span class="stat-pill"><span class="lbl">接入平台</span><b id="stat-plat">11</b></span>
-        <span class="stat-pill"><span class="lbl">已落地材料</span><b id="stat-ready">2</b><span class="lbl">支付宝 · 抖音小程序</span></span>
-        <span class="stat-pill"><span class="lbl">待补充</span><b id="stat-todo" style="color:var(--text-sub);">9</b></span>
+        <span class="stat-pill"><span class="lbl">接入平台</span><b id="stat-plat">3</b></span>
+        <span class="stat-pill"><span class="lbl">已落地材料</span><b id="stat-ready">1</b><span class="lbl">抖音小程序</span></span>
+        <span class="stat-pill"><span class="lbl">无需备案</span><b id="stat-nofiling" style="color:var(--status-success);">1</b><span class="lbl">OPPO端原生</span></span>
+        <span class="stat-pill"><span class="lbl">待补充</span><b id="stat-todo" style="color:var(--text-sub);">1</b></span>
         <span class="stat-pill"><span class="lbl">短剧</span><b id="stat-drama">0</b></span>
       </div>
 
@@ -135,7 +132,7 @@
 
       <div class="sync-note reveal">
         <i data-icon="info"></i>
-        <span>自动生成与分发规则：短剧列表新增短剧 → 按「短剧 × 平台」生成各平台备案材料 → 已落地平台（支付宝 / 抖音小程序）材料生成完毕 → 依据分发规则自动分发；未落地平台材料待补充，暂停向该平台分发。</span>
+        <span>自动生成与分发规则：短剧列表新增短剧 → 按「短剧 × 平台」生成各平台备案材料 → 已落地平台（抖音小程序）材料生成完毕即自动分发；待补充平台（微信小程序）暂停向该平台分发；OPPO端原生渠道无需备案材料，可直接分发。手动创建的短剧仅生成本页备案材料、不触发自动分发，需在「一键分发」手动发起。</span>
       </div>
     </div>
   </main>
@@ -145,17 +142,9 @@
   <script>
     /* ================= 平台接入清单（后续可逐个落地材料规则） ================= */
     var FILING_PLATFORMS = [
-      { key: 'wechat',     name: '微信小程序',      ready: false },
-      { key: 'douyin',     name: '抖音小程序',      ready: true },
-      { key: 'tme',        name: 'TME端原生',       ready: false },
-      { key: 'sohu',       name: '搜狐端原生',      ready: false },
-      { key: 'bili',       name: 'B站小程序',       ready: false },
-      { key: 'oppo',       name: 'OPPO端原生',      ready: false },
-      { key: 'baijiahao',  name: '百家号端原生',    ready: false },
-      { key: 'alipay',     name: '支付宝端原生+小程序', ready: true },
-      { key: 'yinhe',      name: '银河端原生',      ready: false },
-      { key: 'honor',      name: '荣耀端原生',      ready: false },
-      { key: 'vivo',       name: 'VIVO端原生',      ready: false }
+      { key: 'wechat', name: '微信小程序', ready: false },
+      { key: 'douyin', name: '抖音小程序', ready: true },
+      { key: 'oppo',   name: 'OPPO端原生',  ready: false, noFiling: true }
     ];
 
     /* ---- 工具：日期 / 授权期限 / 制作成本 ---- */
@@ -233,6 +222,12 @@
     }
 
     function platformCardHtml(plat, d) {
+      if (plat.noFiling) {
+        return '<div class="plat-card plat-ready">' +
+          '<div class="plat-card-head"><span class="plat-ico"><i data-icon="shield-check"></i></span><span class="plat-name">' + escHtml(plat.name) + '</span><span class="tag tag-success">无需备案</span></div>' +
+          '<div class="plat-card-body"><div class="plat-todo-note"><i data-icon="info"></i><span>OPPO端原生渠道无需备案材料，短剧提交后可直接分发。</span></div></div>' +
+        '</div>';
+      }
       var ms = materialsFor(d, plat.key);
       if (plat.ready && ms.length) {
         return '<div class="plat-card plat-ready">' +
@@ -267,11 +262,13 @@
     }
 
     function statusCellHtml(d) {
-      var ready = FILING_PLATFORMS.filter(function (p) { return p.ready; });
-      var todo = FILING_PLATFORMS.filter(function (p) { return !p.ready; });
+      var ready = FILING_PLATFORMS.filter(function (p) { return p.ready && !p.noFiling; });
+      var noFiling = FILING_PLATFORMS.filter(function (p) { return p.noFiling; });
+      var todo = FILING_PLATFORMS.filter(function (p) { return !p.ready && !p.noFiling; });
       var readyHtml = ready.map(function (p) { return '<span class="tag tag-success">' + escHtml(p.name) + ' ' + materialsFor(d, p.key).length + ' 份</span>'; }).join(' ');
+      var noFilingHtml = noFiling.map(function (p) { return '<span class="tag tag-success">' + escHtml(p.name) + ' 无需备案</span>'; }).join(' ');
       var todoHtml = '<span class="tag tag-neutral">待补充 ' + todo.length + ' 平台</span>';
-      return readyHtml + ' ' + todoHtml;
+      return readyHtml + ' ' + noFilingHtml + ' ' + todoHtml;
     }
 
     function filingRowHtml(d) {
@@ -301,8 +298,9 @@
         return (d.title && d.title.toLowerCase().indexOf(kw) > -1) || (d.id && d.id.toLowerCase().indexOf(kw) > -1);
       });
       document.getElementById('stat-plat').textContent = FILING_PLATFORMS.length;
-      document.getElementById('stat-ready').textContent = FILING_PLATFORMS.filter(function (p) { return p.ready; }).length;
-      document.getElementById('stat-todo').textContent = FILING_PLATFORMS.filter(function (p) { return !p.ready; }).length;
+      document.getElementById('stat-ready').textContent = FILING_PLATFORMS.filter(function (p) { return p.ready && !p.noFiling; }).length;
+      document.getElementById('stat-nofiling').textContent = FILING_PLATFORMS.filter(function (p) { return p.noFiling; }).length;
+      document.getElementById('stat-todo').textContent = FILING_PLATFORMS.filter(function (p) { return !p.ready && !p.noFiling; }).length;
       document.getElementById('stat-drama').textContent = (DB.dramas || []).length;
       document.getElementById('filing-total').textContent = '共 ' + list.length + ' 部短剧';
       var tb = document.querySelector('#filing-table tbody');

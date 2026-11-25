@@ -18,19 +18,15 @@
     <nav class="nav-menu">
       <div class="nav-group-label">短剧管理</div>
       <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
-      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>备案管理</span></a>
       <div class="nav-group-label sub">分发</div>
       <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
       <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
       <div class="nav-group-label">内容管理</div>
       <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
-      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
-      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
-      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
-      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
-      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
-      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
-      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <a class="nav-item" data-nav="wechat" href="wechat-content.html"><i data-icon="image"></i><span>微信内容库</span></a>
+      <a class="nav-item" data-nav="douyin" href="douyin-content.html"><i data-icon="image"></i><span>抖音内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>OPPO内容库</span></a>
       <button type="button" class="nav-collapse-head">
         <span>不做了</span>
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
@@ -81,15 +77,9 @@
               <label class="form-label">平台</label>
               <select class="input" id="auto-platform">
                 <option value="">全部</option>
-                <option>搜狐</option>
-                <option>oppo</option>
-                <option>百家号</option>
-                <option>支付宝</option>
-                <option>银河</option>
-                <option>荣耀</option>
-                <option>VIVO</option>
-                <option>论坛小程序</option>
-                <option>媒资测试</option>
+                <option>OPPO端原生</option>
+                <option>微信小程序</option>
+                <option>抖音小程序</option>
               </select>
             </div>
           </div>
@@ -137,15 +127,9 @@
               <label class="form-label">平台</label>
               <select class="input" id="man-platform">
                 <option value="">全部</option>
-                <option>搜狐</option>
-                <option>oppo</option>
-                <option>百家号</option>
-                <option>支付宝</option>
-                <option>银河</option>
-                <option>荣耀</option>
-                <option>VIVO</option>
-                <option>论坛小程序</option>
-                <option>媒资测试</option>
+                <option>OPPO端原生</option>
+                <option>微信小程序</option>
+                <option>抖音小程序</option>
               </select>
             </div>
             <div class="form-field">
@@ -211,28 +195,21 @@
   <script>
     /* 自动分发（系统行为）：按平台聚合，无运营维度 */
     var AUTO_ROWS = [
-      { platform: '搜狐', total: 195, success: 185 },
-      { platform: 'oppo', total: 170, success: 160 },
-      { platform: '百家号', total: 136, success: 128 },
-      { platform: '支付宝', total: 108, success: 103 },
-      { platform: '银河', total: 90, success: 86 },
-      { platform: '荣耀', total: 72, success: 68 },
-      { platform: 'VIVO', total: 60, success: 56 },
-      { platform: '论坛小程序', total: 48, success: 46 },
-      { platform: '媒资测试', total: 37, success: 35 }
+      { platform: 'OPPO端原生', total: 170, success: 160 },
+      { platform: '微信小程序', total: 142, success: 138 },
+      { platform: '抖音小程序', total: 118, success: 105 }
     ];
 
     /* 运营手动分发：运营 × 平台 */
     var MANUAL_ROWS = [
-      { operator: '舟横', platform: '搜狐', submitted: 19, success: 13 },
-      { operator: '舟横', platform: 'oppo', submitted: 16, success: 12 },
-      { operator: '林晚', platform: '百家号', submitted: 14, success: 11 },
-      { operator: '顾言', platform: '支付宝', submitted: 12, success: 9 },
-      { operator: '舟横', platform: '银河', submitted: 8, success: 5 },
-      { operator: '林晚', platform: '荣耀', submitted: 8, success: 6 },
-      { operator: '顾言', platform: 'VIVO', submitted: 6, success: 4 },
-      { operator: '舟横', platform: '论坛小程序', submitted: 4, success: 3 },
-      { operator: '林晚', platform: '媒资测试', submitted: 4, success: 3 }
+      { operator: '舟横', platform: 'OPPO端原生', submitted: 16, success: 12 },
+      { operator: '林晚', platform: '微信小程序', submitted: 14, success: 11 },
+      { operator: '顾言', platform: '抖音小程序', submitted: 12, success: 9 },
+      { operator: '舟横', platform: '微信小程序', submitted: 9, success: 6 },
+      { operator: '林晚', platform: 'OPPO端原生', submitted: 8, success: 6 },
+      { operator: '顾言', platform: 'OPPO端原生', submitted: 6, success: 4 },
+      { operator: '舟横', platform: '抖音小程序', submitted: 5, success: 3 },
+      { operator: '林晚', platform: '抖音小程序', submitted: 4, success: 3 }
     ];
 
     function pct(a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; }

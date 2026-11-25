@@ -110,19 +110,15 @@
     <nav class="nav-menu">
       <div class="nav-group-label">短剧管理</div>
       <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
-      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>备案管理</span></a>
       <div class="nav-group-label sub">分发</div>
       <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
       <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
       <div class="nav-group-label">内容管理</div>
       <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
-      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
-      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
-      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
-      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
-      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
-      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
-      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <a class="nav-item" data-nav="wechat" href="wechat-content.html"><i data-icon="image"></i><span>微信内容库</span></a>
+      <a class="nav-item" data-nav="douyin" href="douyin-content.html"><i data-icon="image"></i><span>抖音内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>OPPO内容库</span></a>
       <button type="button" class="nav-collapse-head">
         <span>不做了</span>
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
@@ -529,7 +525,7 @@
             <div class="step-pane" data-pane="4">
               <div class="panel-head"><div class="panel-title"><i data-icon="badge-check"></i>预览确认</div><span class="tag tag-success">字段完备</span></div>
               <div class="panel-body">
-                <div class="alert alert-success"><i data-icon="circle-check"></i><span>统一字段已录入，可覆盖 7 个平台分发所需的剧级与剧集级字段。提交后进入「剧集管理」，并可发起「一键分发」。</span></div>
+                <div class="alert alert-success"><i data-icon="circle-check"></i><span>统一字段已录入，可覆盖 7 个平台分发所需的剧级与剧集级字段。提交后短剧入库「短剧列表」；手动创建的短剧不自动分发，需在「一键分发」手动发起。</span></div>
                 <div class="form-grid" id="preview"></div>
               </div>
             </div>
@@ -552,6 +548,7 @@
               <div class="help-step"><span class="n">2</span><p>剧集复用媒资库文件，避免同一视频多次上传。</p></div>
               <div class="help-step"><span class="n">3</span><p>备案与版权材料在各平台分发时补充，不再于创建阶段统一录入。</p></div>
               <div class="help-step" style="background:var(--primary-muted); border-color:var(--primary-soft);"><span class="n" style="background:var(--primary)">4</span><p style="font-weight:500;">分发时仅补填平台特有字段，一键完成字段映射。</p></div>
+              <div class="help-step"><span class="n">5</span><p>手动创建的短剧不走自动分发，提交入库后需在「一键分发」手动发起；中台推送的短剧才会自动分发。</p></div>
             </div>
           </div>
           <div class="panel">

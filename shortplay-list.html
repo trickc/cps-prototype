@@ -18,19 +18,15 @@
     <nav class="nav-menu">
       <div class="nav-group-label">短剧管理</div>
       <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
-      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>备案管理</span></a>
       <div class="nav-group-label sub">分发</div>
       <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
       <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
       <div class="nav-group-label">内容管理</div>
       <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
-      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
-      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
-      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
-      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
-      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
-      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
-      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <a class="nav-item" data-nav="wechat" href="wechat-content.html"><i data-icon="image"></i><span>微信内容库</span></a>
+      <a class="nav-item" data-nav="douyin" href="douyin-content.html"><i data-icon="image"></i><span>抖音内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>OPPO内容库</span></a>
       <button type="button" class="nav-collapse-head">
         <span>不做了</span>
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
@@ -68,25 +64,42 @@
         </div>
         <div class="panel-body" style="display:flex; flex-direction:column; gap:var(--space-4); padding: var(--space-4) var(--space-5);">
           <div class="filter-grid">
+            <!-- 关键词：按短剧名称或 CPS 短剧 ID 模糊搜索 -->
             <div class="input"><i data-icon="search"></i><input class="input-control" placeholder="短剧名称 / ID"></div>
+            <!-- 播放源：端原生 / 小程序 / 本地 / 视频号 等投放来源 -->
             <select class="input"><option value="">播放源</option><option>抖音</option><option>小程序</option><option>本地</option><option>视频号</option></select>
+            <!-- 合作剧类型：承制剧 / 自制剧 / 外部剧 等合作模式 -->
             <select class="input"><option value="">合作剧类型</option><option>承制剧-微短剧</option><option>承制剧-数字营销中心</option><option>自制剧</option><option>外部剧</option><option>外部承制剧-承制</option><option>外部承制剧-小说</option></select>
+            <!-- 内容团队：负责内容产出的内部团队 -->
             <select class="input"><option value="">内容团队</option><option>念三团队</option><option>九天团队</option><option>慕白团队</option></select>
+            <!-- 拍摄团队：外部拍摄团队可选填 -->
             <div class="input"><input class="input-control" placeholder="拍摄团队"></div>
+            <!-- 合作方：外部承制或联合制作方 -->
             <select class="input"><option value="">合作方</option><option>麦芽传媒</option><option>外部合作方</option></select>
+            <!-- 状态：短剧上架 / 下架 / 隐藏 -->
             <select class="input"><option value="">状态</option><option>上架</option><option>下架</option><option>隐藏</option></select>
+            <!-- 端原生上架：否 / 是 / 仅端原生 -->
             <select class="input"><option value="">端原生上架</option><option>否</option><option>是</option><option>仅端原生</option></select>
+            <!-- 短剧类型：剧情题材标签 -->
             <select class="input"><option value="">短剧类型</option><option>逆袭</option><option>古装</option><option>言情</option><option>家庭</option></select>
+            <!-- 作品分类：男频 / 女频 / 免费 / 付费 -->
             <select class="input"><option value="">作品分类</option><option>男频</option><option>女频</option><option>免费短剧</option><option>付费短剧</option></select>
+            <!-- 作品标签：贴心标签，可多选 -->
             <select class="input"><option value="">作品标签</option><option>爽文</option><option>甜宠</option><option>战神</option><option>都市</option><option>逆袭</option></select>
+            <!-- 首次上线：是否首次上线 -->
             <select class="input"><option value="">首次上线</option><option>是</option><option>否</option></select>
           </div>
           <div class="filter-actions">
+            <!-- 按上述条件执行检索 -->
             <button class="btn btn-secondary btn-md" onclick="toast('原型示意：搜索')"><i data-icon="search"></i>搜索</button>
+            <!-- 查看操作说明 -->
             <button class="btn btn-ghost btn-md" onclick="toast('原型示意：操作说明')">操作说明</button>
             <span class="spacer"></span>
-            <button class="btn btn-primary btn-md" onclick="goCreate()"><i data-icon="plus"></i>新增短剧</button>
+            <!-- 新增短剧：打开「小程序」挂载/编辑弹窗 -->
+            <button class="btn btn-primary btn-md" onclick="openMount()"><i data-icon="plus"></i>新增短剧</button>
+            <!-- 导出当前筛选结果 -->
             <button class="btn btn-secondary btn-md" onclick="toast('原型示意：导出')"><i data-icon="download"></i>导出</button>
+            <!-- 批量分配代理商 -->
             <button class="btn btn-secondary btn-md" onclick="toast('原型示意：批量分配')">批量分配</button>
           </div>
         </div>
@@ -102,16 +115,27 @@
           <table class="data-table">
             <thead>
               <tr>
+                <!-- 短剧名称 + CPS 短剧 ID -->
                 <th>短剧名称</th>
+                <!-- 合作剧类型（承制/自制/外部） -->
                 <th>合作剧类型</th>
+                <!-- 负责内容团队 -->
                 <th>内容团队</th>
+                <!-- 上架/下架/隐藏 -->
                 <th>短剧状态</th>
+                <!-- 总集数与收费区间 -->
                 <th>总集数 / 收费</th>
+                <!-- 投放播放源 -->
                 <th>播放源</th>
+                <!-- 备注标签（新剧等） -->
                 <th>备注</th>
+                <!-- 小程序分类 -->
                 <th>小程序分类</th>
+                <!-- 创建人 -->
                 <th>创建人</th>
+                <!-- 新增时间 -->
                 <th>新增时间</th>
+                <!-- 行内操作入口 -->
                 <th style="text-align:right">操作</th>
               </tr>
             </thead>
@@ -147,11 +171,19 @@
                 <td>舟横</td>
                 <td>2026-11-05 10:24</td>
                 <td style="text-align:right; white-space:nowrap;">
+                  <!-- 管理该剧的剧集/集数 -->
                   <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <!-- 分配负责运营的代理商 -->
                   <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <!-- 切换该剧投放的播放源 -->
                   <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
-                  <a class="link-action" onclick="goCreate()">编辑</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 复制该短剧 -->
                   <a class="link-action" onclick="toast('原型示意：复制')">复制</a>
+                  <!-- 跳转一键分发 -->
                   <a class="link-action" href="distribute.html?id=SPR-20261105-001">一键分发</a>
                 </td>
               </tr>
@@ -186,10 +218,17 @@
                 <td>林晚</td>
                 <td>2026-11-15 14:02</td>
                 <td style="text-align:right; white-space:nowrap;">
+                  <!-- 管理该剧的剧集/集数 -->
                   <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <!-- 切换该剧投放的播放源 -->
                   <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
-                  <a class="link-action" onclick="goCreate()">编辑</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 复制该短剧 -->
                   <a class="link-action" onclick="toast('原型示意：复制')">复制</a>
+                  <!-- 跳转一键分发 -->
                   <a class="link-action" href="distribute.html?id=SPR-20261115-018">一键分发</a>
                 </td>
               </tr>
@@ -219,9 +258,17 @@
                 <td>舟横</td>
                 <td>2026-11-15 16:30</td>
                 <td style="text-align:right; white-space:nowrap;">
+                  <!-- 管理该剧的剧集/集数 -->
                   <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <!-- 分配负责运营的代理商 -->
                   <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <!-- 切换该剧投放的播放源 -->
                   <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 跳转一键分发 -->
                   <a class="link-action" href="distribute.html?id=SPR-20261115-041">一键分发</a>
                 </td>
               </tr>
@@ -251,9 +298,15 @@
                 <td>顾言</td>
                 <td>2026-11-15 18:45</td>
                 <td style="text-align:right; white-space:nowrap;">
+                  <!-- 分配负责运营的代理商 -->
                   <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <!-- 切换该剧投放的播放源 -->
                   <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
-                  <a class="link-action" onclick="goCreate()">编辑</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 跳转一键分发 -->
                   <a class="link-action" href="distribute.html?id=SPR-20261115-052">一键分发</a>
                 </td>
               </tr>
@@ -276,9 +329,196 @@
     </div>
   </main>
 
+  <!-- 新增方式选择弹层 -->
+  <div class="modal-backdrop" id="create-choice" hidden onclick="closeCreateChoice()">
+    <div class="modal modal-sm" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">新增短剧</div>
+        <button class="icon-btn" onclick="closeCreateChoice()"><i data-icon="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="choice-stack">
+          <!-- 端原生：进入「新建短剧」步骤页 -->
+          <div class="choice-card" onclick="goNative()">
+            <span class="choice-icon"><i data-icon="clapperboard"></i></span>
+            <span>
+              <span class="choice-title">端原生</span>
+              <span class="choice-desc">进入短剧剧库「新建短剧」步骤流程</span>
+            </span>
+            <span class="choice-arrow"><i data-icon="chevron-right"></i></span>
+          </div>
+          <!-- 小程序：打开挂载/编辑弹窗 -->
+          <div class="choice-card" onclick="openMount()">
+            <span class="choice-icon"><i data-icon="link"></i></span>
+            <span>
+              <span class="choice-title">小程序</span>
+              <span class="choice-desc">现有的挂载小程序功能，不修改</span>
+            </span>
+            <span class="choice-arrow"><i data-icon="chevron-right"></i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 挂载弹窗 -->
+  <div class="modal-backdrop" id="mount-modal" hidden onclick="closeMount()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">小程序</div>
+        <button class="icon-btn" onclick="closeMount()"><i data-icon="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-note"><i data-icon="info"></i><span>现有的新增短剧功能，不修改。</span></div>
+        <div class="form-grid">
+          <!-- 作品类型：短剧题材类型，必填 -->
+          <div class="form-field">
+            <label class="form-label">作品类型<span class="req">*</span></label>
+            <select class="input" disabled><option>请选择短剧类型</option></select>
+          </div>
+          <!-- 作品分类：男频/女频等，必填；支持新增分类 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">作品分类<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <button class="btn btn-ghost btn-sm" disabled>新增分类</button>
+            </div>
+            <select class="input" disabled><option>请选择作品分类</option></select>
+          </div>
+          <!-- 作品标签：贴心标签，必填；支持新增标签 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">作品标签<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <button class="btn btn-ghost btn-sm" disabled>新增标签</button>
+            </div>
+            <select class="input" disabled><option>请选择作品标签</option></select>
+          </div>
+          <!-- 短剧名称：必填；可跳转「剧名配置」 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">短剧名称<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <a class="link-action" onclick="event.preventDefault();">剧名配置</a>
+            </div>
+            <div class="input"><input class="input-control" placeholder="请输入短剧名称" disabled></div>
+          </div>
+          <!-- 短剧角标：可选角标标签 -->
+          <div class="form-field">
+            <label class="form-label">短剧角标</label>
+            <select class="input" disabled><option>请选择短剧角标</option></select>
+          </div>
+          <!-- 剧本团队：必填；可跳转「团队管理」 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">剧本团队<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <a class="link-action" onclick="event.preventDefault();">团队管理</a>
+            </div>
+            <select class="input" disabled><option>请选择剧本团队</option></select>
+          </div>
+          <!-- 拍摄团队：外部拍摄可不填 -->
+          <div class="form-field">
+            <label class="form-label">拍摄团队</label>
+            <div class="input"><input class="input-control" placeholder="请输入，外部拍摄可不填" disabled></div>
+          </div>
+          <!-- 合作剧类型：必填 -->
+          <div class="form-field">
+            <label class="form-label">合作剧类型<span class="req">*</span></label>
+            <select class="input" disabled><option>请选择合作剧类型</option></select>
+          </div>
+          <!-- 项目名称：用于关联搜索项目 -->
+          <div class="form-field">
+            <label class="form-label">项目名称</label>
+            <div class="input"><input class="input-control" placeholder="请输入项目名称进行搜索" disabled></div>
+          </div>
+          <!-- 作品来源：作品的获取/来源渠道 -->
+          <div class="form-field">
+            <label class="form-label">作品来源</label>
+            <select class="input" disabled><option>请选择作品来源</option></select>
+          </div>
+          <!-- 创作团队：负责创作产出 -->
+          <div class="form-field">
+            <label class="form-label">创作团队</label>
+            <select class="input" disabled><option>请选择创作团队</option></select>
+          </div>
+          <!-- 共创团队：联合创作团队 -->
+          <div class="form-field">
+            <label class="form-label">共创团队</label>
+            <select class="input" disabled><option>请选择共创团队</option></select>
+          </div>
+          <!-- 合作方名称：外部合作方 -->
+          <div class="form-field">
+            <label class="form-label">合作方名称</label>
+            <select class="input" disabled><option>请选择合作方名称</option></select>
+          </div>
+          <!-- 腾讯分类：腾讯侧分类，必填 -->
+          <div class="form-field">
+            <label class="form-label">腾讯分类<span class="req">*</span></label>
+            <select class="input" disabled><option>请选择腾讯分类</option></select>
+          </div>
+          <!-- 每集区间定价：最低价与最高价 -->
+          <div class="form-field full">
+            <label class="form-label">每集区间定价</label>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr; column-gap:var(--space-3); row-gap:0;">
+              <div class="form-field">
+                <label class="form-label">最低价<span class="req">*</span></label>
+                <div class="input"><input class="input-control" value="50" disabled></div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">最高价<span class="req">*</span></label>
+                <div class="input"><input class="input-control" value="990" disabled></div>
+              </div>
+            </div>
+          </div>
+          <!-- 端原生上架：否/是/仅端原生，必填 -->
+          <div class="form-field full">
+            <label class="form-label">端原生上架<span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="mount-native" disabled><span class="radio-dot"></span>否</label>
+              <label class="radio-option"><input type="radio" name="mount-native" disabled><span class="radio-dot"></span>是</label>
+              <label class="radio-option"><input type="radio" name="mount-native" checked disabled><span class="radio-dot"></span>仅端原生</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <!-- 取消并关闭弹窗 -->
+        <button class="btn btn-secondary btn-md" onclick="closeMount()">取消</button>
+        <!-- 提交当前编辑表单 -->
+        <button class="btn btn-primary btn-md" onclick="submitMount()">提交</button>
+      </div>
+    </div>
+  </div>
+
   <script src="components.js"></script>
   <script>
+    // 跳转到「新建短剧」步骤页（端原生完整新建/编辑流程）
     function goCreate() { window.location.href = 'create.html'; }
+
+    // 打开「新增方式选择」弹层
+    function openCreateChoice() { document.getElementById('create-choice').hidden = false; }
+
+    // 关闭「新增方式选择」弹层
+    function closeCreateChoice() { document.getElementById('create-choice').hidden = true; }
+
+    // 选择「端原生」：进入新建短剧步骤页
+    function goNative() { window.location.href = 'create.html'; }
+
+    // 打开「小程序」挂载/编辑弹窗（新增短剧与编辑共用的入口）
+    function openMount() {
+      document.getElementById('create-choice').hidden = true;
+      document.getElementById('mount-modal').hidden = false;
+    }
+
+    // 关闭「小程序」挂载/编辑弹窗
+    function closeMount() { document.getElementById('mount-modal').hidden = true; }
+
+    // 提交「小程序」挂载/编辑结果（当前为原型示意）
+    function submitMount() {
+      closeMount();
+      toast('现有的新增短剧功能，暂不修改');
+    }
   </script>
 </body>
 </html>

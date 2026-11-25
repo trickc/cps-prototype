@@ -3,16 +3,22 @@
    所有页面统一从这里读取；字段对齐「统一字段模型」见 contract/data-model.md
    ========================================================================= */
 
-/* 平台定义（7 个已对接内容库） */
+/* 平台定义：聚焦三渠道（微信小程序 / 抖音小程序 / OPPO端原生）；
+   其余平台标记 hidden=true 仅隐藏界面，数据与字段契约保留，可随时恢复 */
 const PLATFORMS = [
-  { key: 'oppo',      name: 'OPPO',   tone: '#14574F', flow: '创建短剧 → 全量推送剧集 → 提审发布',     imported: true },
-  { key: 'vivo',      name: 'vivo',   tone: '#5E7A8F', flow: '短剧入库 → 视频发布 → 上下架',            imported: true },
-  { key: 'honor',     name: '荣耀',   tone: '#3A7D52', flow: '推剧 → 推集(触发转码) → 补偿任务拉取',      imported: true },
-  { key: 'yinhe',     name: '银河',   tone: '#B08A4B', flow: '推 album → 推 video → 介质注入/转码',       imported: true },
-  { key: 'sohu',      name: '搜狐',   tone: '#A06B5C', flow: '建播单 → 上传音视频 → session 提交',       imported: true },
-  { key: 'baijiahao', name: '百家号', tone: '#4A6E88', flow: '创建短剧壳 → 逐集上传 → 提交发布',          imported: true },
-  { key: 'alipay',    name: '支付宝', tone: '#14574F', flow: '创建短剧 → 编辑 → 提审并发布 → 查询结果',   imported: true }
+  { key: 'oppo',      name: 'OPPO端原生', tone: '#14574F', flow: '创建短剧 → 全量推送剧集 → 提审发布', hidden: false },
+  { key: 'wechat',    name: '微信小程序', tone: '#07C160', flow: '待定', hidden: false },
+  { key: 'douyin',    name: '抖音小程序', tone: '#161823', flow: '待定', hidden: false },
+  { key: 'vivo',      name: 'vivo',   tone: '#5E7A8F', flow: '短剧入库 → 视频发布 → 上下架', hidden: true },
+  { key: 'honor',     name: '荣耀',   tone: '#3A7D52', flow: '推剧 → 推集(触发转码) → 补偿任务拉取', hidden: true },
+  { key: 'yinhe',     name: '银河',   tone: '#B08A4B', flow: '推 album → 推 video → 介质注入/转码', hidden: true },
+  { key: 'sohu',      name: '搜狐',   tone: '#A06B5C', flow: '建播单 → 上传音视频 → session 提交', hidden: true },
+  { key: 'baijiahao', name: '百家号', tone: '#4A6E88', flow: '创建短剧壳 → 逐集上传 → 提交发布', hidden: true },
+  { key: 'alipay',    name: '支付宝', tone: '#14574F', flow: '创建短剧 → 编辑 → 提审并发布 → 查询结果', hidden: true }
 ];
+
+/* 界面可见平台（聚焦三渠道；其余平台数据保留、仅隐藏界面） */
+const VISIBLE_PLATFORMS = PLATFORMS.filter(function (p) { return !p.hidden; });
 
 /* 内容分类（两级，必填单选）：一级 → 二级 */
 const CONTENT_CATEGORIES = {
@@ -146,6 +152,8 @@ function baijiaTagsForAudience(audience) {
 
 /* 平台特有字段（分发时需在公共字段之外补充） */
 const PLATFORM_SPECIAL = {
+  wechat: [],
+  douyin: [],
   oppo: [
     { label: '短剧类型', key: 'dramaType', control: 'radio', options: ['普通短剧', '快应用短剧'], default: '普通短剧', note: 'dramaType · normal-普通短剧 / quick-快应用短剧', required: true },
     { label: '版权到期时间', key: 'copyrightExpiry', control: 'datetime', note: '版权授权到期时间', required: true },

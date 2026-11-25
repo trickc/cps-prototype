@@ -140,19 +140,15 @@
     <nav class="nav-menu">
       <div class="nav-group-label">短剧管理</div>
       <a class="nav-item" data-nav="shortplay-list" href="shortplay-list.html"><i data-icon="list"></i><span>短剧列表</span></a>
-      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>平台备案管理</span></a>
+      <a class="nav-item" data-nav="filing" href="filing.html"><i data-icon="shield-check"></i><span>备案管理</span></a>
       <div class="nav-group-label sub">分发</div>
       <a class="nav-item" data-nav="board" href="board.html"><i data-icon="layout-dashboard"></i><span>分发看板</span></a>
       <a class="nav-item" data-nav="distribution" href="distribution.html"><i data-icon="bar-chart"></i><span>分发管理</span></a>
       <div class="nav-group-label">内容管理</div>
       <a class="nav-item" data-nav="episodes" href="episodes.html"><i data-icon="film"></i><span>媒资内容库</span></a>
-      <a class="nav-item" data-nav="sohu" href="sohu-content.html"><i data-icon="image"></i><span>搜狐内容库</span></a>
-      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>oppo内容库</span></a>
-      <a class="nav-item" data-nav="baijiahao" href="baijiahao-content.html"><i data-icon="image"></i><span>百家号内容库</span></a>
-      <a class="nav-item" data-nav="alipay" href="alipay-content.html"><i data-icon="image"></i><span>支付宝内容库</span></a>
-      <a class="nav-item" data-nav="galaxy" href="galaxy-content.html"><i data-icon="image"></i><span>银河内容库</span></a>
-      <a class="nav-item" data-nav="honor" href="honor-content.html"><i data-icon="image"></i><span>荣耀内容库</span></a>
-      <a class="nav-item" data-nav="vivo" href="vivo-content.html"><i data-icon="image"></i><span>VIVO内容库</span></a>
+      <a class="nav-item" data-nav="wechat" href="wechat-content.html"><i data-icon="image"></i><span>微信内容库</span></a>
+      <a class="nav-item" data-nav="douyin" href="douyin-content.html"><i data-icon="image"></i><span>抖音内容库</span></a>
+      <a class="nav-item" data-nav="oppo" href="oppo-content.html"><i data-icon="image"></i><span>OPPO内容库</span></a>
       <button type="button" class="nav-collapse-head">
         <span>不做了</span>
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
@@ -289,7 +285,7 @@
     /* 渲染平台 Tab：全部 + 7 个平台 */
     function renderTabs() {
       var box = document.getElementById('platform-tabs');
-      var items = [{ key: '', name: '全部' }].concat(PLATFORMS.map(function (p) { return { key: p.key, name: p.name }; }));
+      var items = [{ key: '', name: '全部' }].concat(VISIBLE_PLATFORMS.map(function (p) { return { key: p.key, name: p.name }; }));
       box.innerHTML = items.map(function (it) {
         return '<button class="chip selectable' + (STATE.platform === it.key ? ' sel' : '') + '" onclick="switchPlatform(\'' + it.key + '\')">' + it.name + '</button>';
       }).join('');
@@ -328,6 +324,7 @@
     /* 当前筛选后的记录集合 */
     function currentRecords() {
       var list = (DB.distributionRecords || []).slice();
+      list = list.filter(function (r) { return VISIBLE_PLATFORMS.some(function (p) { return p.key === r.platform; }); });
       if (STATE.platform) list = list.filter(function (r) { return r.platform === STATE.platform; });
       if (STATE.status) list = list.filter(function (r) { return r.status === STATE.status; });
       if (STATE.kw) {
@@ -340,7 +337,7 @@
     }
 
     function renderStats() {
-      var all = DB.distributionRecords || [];
+      var all = (DB.distributionRecords || []).filter(function (r) { return VISIBLE_PLATFORMS.some(function (p) { return p.key === r.platform; }); });
       var syncing = 0, online = 0, error = 0;
       all.forEach(function (r) {
         var info = distStatusInfo(r.platform, r.status);
@@ -427,7 +424,7 @@
     /* ===== 汇总视图：每行一部短剧，各平台状态网格 ===== */
     function summaryThead() {
       var th = '<tr><th>短剧</th>';
-      PLATFORMS.forEach(function (p) { th += '<th>' + p.name + '</th>'; });
+      VISIBLE_PLATFORMS.forEach(function (p) { th += '<th>' + p.name + '</th>'; });
       th += '<th style="text-align:right">操作</th></tr>';
       return th;
     }
@@ -442,7 +439,7 @@
 
     function summaryRow(d) {
       var map = dramaStatusMap(d.id);
-      var cells = PLATFORMS.map(function (p) {
+      var cells = VISIBLE_PLATFORMS.map(function (p) {
         var r = map[p.key];
         if (!r) return '<td><div class="status-cell none"><span class="pf">' + p.name + '</span><span class="st">未分发</span></div></td>';
         var info = distStatusInfo(p.key, r.status);
