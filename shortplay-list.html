@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>短剧列表 · CPS 内容中台</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 已分发平台/上线平台 比例徽标 */
+    .ratio-badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; background:var(--primary-muted); color:var(--primary); font-family:var(--font-mono); font-size:var(--font-size-caption); font-weight:var(--font-weight-medium); cursor:pointer; user-select:none; white-space:nowrap; }
+    .ratio-badge:hover { background:var(--primary-soft); }
+    /* 平台分发详情气泡 */
+    .plat-bubble { position:fixed; z-index:1000; min-width:200px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-2); overflow:hidden; }
+    .plat-bubble-head { display:flex; align-items:center; justify-content:space-between; padding:var(--space-2) var(--space-3); font-weight:var(--font-weight-medium); color:var(--text); border-bottom:1px solid var(--border-faint); }
+    .plat-bubble-ratio { font-family:var(--font-mono); font-size:var(--font-size-caption); color:var(--primary); background:var(--primary-muted); padding:1px 8px; border-radius:999px; }
+    .plat-bubble-row { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-2) var(--space-3); font-size:var(--font-size-body); color:var(--text); }
+  </style>
 </head>
 <body data-page="shortplay-list">
   <aside class="app-nav">
@@ -127,6 +137,8 @@
                 <th>总集数 / 收费</th>
                 <!-- 投放播放源 -->
                 <th>播放源</th>
+                <!-- 已分发平台/上线平台：数字比例，点击气泡看详情 -->
+                <th>已分发平台/上线平台</th>
                 <!-- 备注标签（新剧等） -->
                 <th>备注</th>
                 <!-- 小程序分类 -->
@@ -166,6 +178,7 @@
                   </div>
                 </td>
                 <td>抖音</td>
+                <td><span class="ratio-badge" data-key="d1" onclick="showPlatBubble(this)" title="点击查看平台分发详情">1/3</span></td>
                 <td><span class="tag tag-neutral">新剧</span></td>
                 <td>情感，都市</td>
                 <td>舟横</td>
@@ -213,6 +226,7 @@
                   </div>
                 </td>
                 <td>抖音</td>
+                <td><span class="ratio-badge" data-key="d2" onclick="showPlatBubble(this)" title="点击查看平台分发详情">1/2</span></td>
                 <td><span class="tag tag-neutral">新剧</span></td>
                 <td>逆袭，情感</td>
                 <td>林晚</td>
@@ -253,6 +267,7 @@
                   </div>
                 </td>
                 <td>抖音</td>
+                <td><span class="ratio-badge" data-key="d3" onclick="showPlatBubble(this)" title="点击查看平台分发详情">2/3</span></td>
                 <td><span class="tag tag-neutral">新剧</span></td>
                 <td>古装，情感</td>
                 <td>舟横</td>
@@ -293,6 +308,7 @@
                   </div>
                 </td>
                 <td>抖音 / 本地</td>
+                <td><span class="ratio-badge" data-key="d4" onclick="showPlatBubble(this)" title="点击查看平台分发详情">2/2</span></td>
                 <td><span class="tag tag-neutral">新剧</span></td>
                 <td>逆袭，情感</td>
                 <td>顾言</td>
@@ -491,6 +507,9 @@
     </div>
   </div>
 
+  <!-- 平台分发详情气泡 -->
+  <div id="plat-bubble" class="plat-bubble" hidden></div>
+
   <script src="components.js"></script>
   <script>
     // 跳转到「新建短剧」步骤页（端原生完整新建/编辑流程）
@@ -519,6 +538,33 @@
       closeMount();
       toast('现有的新增短剧功能，暂不修改');
     }
+
+    /* ===== 已分发平台/上线平台 比例气泡 ===== */
+    var PLAT_DETAIL = {
+      d1: [['微信小程序', 0], ['抖音小程序', 1], ['OPPO端原生', 0]],
+      d2: [['微信小程序', 0], ['抖音小程序', 1]],
+      d3: [['微信小程序', 1], ['抖音小程序', 1], ['OPPO端原生', 0]],
+      d4: [['抖音小程序', 1], ['OPPO端原生', 1]]
+    };
+    function showPlatBubble(anchor) {
+      var key = anchor.getAttribute('data-key');
+      var rows = PLAT_DETAIL[key] || [];
+      var done = rows.filter(function (r) { return r[1] === 1; }).length;
+      var b = document.getElementById('plat-bubble');
+      var html = '<div class="plat-bubble-head"><span>平台分发详情</span><span class="plat-bubble-ratio">' + done + '/' + rows.length + '</span></div>';
+      rows.forEach(function (r) {
+        html += '<div class="plat-bubble-row"><span>' + r[0] + '</span><span class="tag ' + (r[1] === 1 ? 'tag-success' : 'tag-neutral') + '">' + (r[1] === 1 ? '已分发' : '待分发') + '</span></div>';
+      });
+      b.innerHTML = html;
+      b.hidden = false;
+      var rect = anchor.getBoundingClientRect();
+      b.style.top = (rect.bottom + 8) + 'px';
+      b.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
+    }
+    function closePlatBubble() { document.getElementById('plat-bubble').hidden = true; }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('.ratio-badge')) closePlatBubble();
+    });
   </script>
 </body>
 </html>

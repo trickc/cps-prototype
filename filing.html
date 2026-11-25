@@ -90,13 +90,13 @@
         </div>
       </div>
 
-      <div class="alert alert-info reveal"><i data-icon="info"></i><span>当前已落地「抖音小程序」平台的备案材料规则；「微信小程序」材料规则待补充；OPPO端原生渠道无需备案材料，可直接分发。每部短剧对应全部接入平台。</span></div>
+      <div class="alert alert-info reveal"><i data-icon="info"></i><span>当前已落地「抖音小程序」「微信小程序」平台的备案材料规则；OPPO端原生渠道无需备案材料，可直接分发。每部短剧对应全部接入平台。</span></div>
 
       <div class="stat-strip reveal">
         <span class="stat-pill"><span class="lbl">接入平台</span><b id="stat-plat">3</b></span>
-        <span class="stat-pill"><span class="lbl">已落地材料</span><b id="stat-ready">1</b><span class="lbl">抖音小程序</span></span>
+        <span class="stat-pill"><span class="lbl">已落地材料</span><b id="stat-ready">2</b><span class="lbl">抖音小程序 / 微信小程序</span></span>
         <span class="stat-pill"><span class="lbl">无需备案</span><b id="stat-nofiling" style="color:var(--status-success);">1</b><span class="lbl">OPPO端原生</span></span>
-        <span class="stat-pill"><span class="lbl">待补充</span><b id="stat-todo" style="color:var(--text-sub);">1</b></span>
+        <span class="stat-pill"><span class="lbl">待补充</span><b id="stat-todo" style="color:var(--text-sub);">0</b></span>
         <span class="stat-pill"><span class="lbl">短剧</span><b id="stat-drama">0</b></span>
       </div>
 
@@ -132,7 +132,7 @@
 
       <div class="sync-note reveal">
         <i data-icon="info"></i>
-        <span>自动生成与分发规则：短剧列表新增短剧 → 按「短剧 × 平台」生成各平台备案材料 → 已落地平台（抖音小程序）材料生成完毕即自动分发；待补充平台（微信小程序）暂停向该平台分发；OPPO端原生渠道无需备案材料，可直接分发。手动创建的短剧仅生成本页备案材料、不触发自动分发，需在「一键分发」手动发起。</span>
+        <span>自动生成与分发规则：短剧列表新增短剧 → 按「短剧 × 平台」生成各平台备案材料 → 已落地平台（抖音小程序 / 微信小程序）材料生成完毕即自动分发；OPPO端原生渠道无需备案材料，可直接分发。手动创建的短剧仅生成本页备案材料、不触发自动分发，需在「一键分发」手动发起。</span>
       </div>
     </div>
   </main>
@@ -142,7 +142,7 @@
   <script>
     /* ================= 平台接入清单（后续可逐个落地材料规则） ================= */
     var FILING_PLATFORMS = [
-      { key: 'wechat', name: '微信小程序', ready: false },
+      { key: 'wechat', name: '微信小程序', ready: true },
       { key: 'douyin', name: '抖音小程序', ready: true },
       { key: 'oppo',   name: 'OPPO端原生',  ready: false, noFiling: true }
     ];
@@ -189,6 +189,13 @@
           ]}
         ];
       }
+      if (key === 'wechat') {
+        return [
+          { name: '成本配置比例情况报告', kind: '清单', fields: [
+            ['短剧名称', d.title], ['总集数', (d.totalEpisodes || 0) + ' 集'], ['制作成本', costDisplay(d)]
+          ]}
+        ];
+      }
       if (key === 'douyin') {
         return [
           { name: '承诺书', kind: '图片', fields: [
@@ -215,9 +222,12 @@
       return '<div class="plat-material">' +
         '<div class="plat-material-head"><span class="plat-material-name">' + escHtml(m.name) + '</span><span class="tag tag-neutral">' + escHtml(m.kind) + '</span></div>' +
         materialRowsHtml(m) +
-        '<div class="plat-material-foot" style="display:flex;justify-content:flex-end;gap:var(--space-2);">' +
+        '<div class="plat-material-foot" style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--space-2);">' +
           '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：预览' + escHtml(m.name) + '\')"><i data-icon="eye"></i>预览</button>' +
           '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：下载' + escHtml(m.name) + '\')"><i data-icon="download"></i>下载</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：上传' + escHtml(m.name) + '\')"><i data-icon="upload"></i>上传</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：下载' + escHtml(m.name) + '模版\')"><i data-icon="file-text"></i>模版下载</button>' +
+          '<button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：重新生成' + escHtml(m.name) + '\')"><i data-icon="refresh-cw"></i>重新生成</button>' +
         '</div></div>';
     }
 
@@ -233,7 +243,10 @@
         return '<div class="plat-card plat-ready">' +
           '<div class="plat-card-head"><span class="plat-ico"><i data-icon="shield-check"></i></span><span class="plat-name">' + escHtml(plat.name) + '</span><span class="tag tag-success">材料已生成</span></div>' +
           '<div class="plat-card-body">' + ms.map(materialHtml).join('') +
-            '<div class="plat-regenerate"><button class="btn btn-ghost btn-sm" onclick="toast(\'原型示意：重新生成' + escHtml(plat.name) + '备案材料\')"><i data-icon="sparkles"></i>重新生成</button></div>' +
+            '<div class="plat-upload-row" style="display:flex;align-items:center;gap:var(--space-3);padding-top:var(--space-3);border-top:1px dashed var(--border);">' +
+              '<button class="btn btn-secondary btn-sm" onclick="toast(\'原型示意：手动上传' + escHtml(plat.name) + '备案材料\')"><i data-icon="upload"></i>手动上传材料</button>' +
+              '<span class="form-hint">系统自动生成，也可手动上传覆盖</span>' +
+            '</div>' +
           '</div>' +
         '</div>';
       }
