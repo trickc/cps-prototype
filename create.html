@@ -343,18 +343,18 @@
                     <select class="input"><option>竖视频</option><option>横视频</option></select>
                   </div>
                   <div class="form-field full">
-                    <label class="form-label">AI生成过程截图</label>
+                    <label class="form-label">AI生成过程截图<span class="req">*</span></label>
                     <div class="shot-list" id="shot-ai-list"></div>
                     <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('shot-ai-input').click()"><i data-icon="image"></i>新增图片</button>
                     <input type="file" id="shot-ai-input" multiple accept="image/*" style="display:none" onchange="shotAdd('ai', this.files)">
-                    <div class="form-hint">上传 AI 生成过程截图，可多张，非必填</div>
+                    <div class="form-hint">上传 AI 生成过程截图，可多张，必填</div>
                   </div>
                   <div class="form-field full">
-                    <label class="form-label">剪辑工程文件截图</label>
+                    <label class="form-label">剪辑工程文件截图<span class="req">*</span></label>
                     <div class="shot-list" id="shot-clip-list"></div>
                     <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('shot-clip-input').click()"><i data-icon="image"></i>新增图片</button>
                     <input type="file" id="shot-clip-input" multiple accept="image/*" style="display:none" onchange="shotAdd('clip', this.files)">
-                    <div class="form-hint">上传剪辑工程文件截图，可多张，非必填</div>
+                    <div class="form-hint">上传剪辑工程文件截图，可多张，必填</div>
                   </div>
                 </div>
               </div>
@@ -1465,6 +1465,8 @@
       if (!selectedWorkTags.length) { toast('作品标签为必填，请至少选择一个'); return; }
       if (!selectedLaunchPlatforms.length) { toast('上线平台为必填，请至少选择一个'); return; }
       if (getFirstLaunch() === '否' && !(msRelatedDrama && msRelatedDrama.get())) { toast('关联短剧为必填，请选择'); return; }
+      if (!shots.ai.length) { toast('AI生成过程截图为必填，请至少上传一张'); return; }
+      if (!shots.clip.length) { toast('剪辑工程文件截图为必填，请至少上传一张'); return; }
       var btn = document.getElementById('btn-next');
       btn.disabled = true; btn.textContent = '提交中…';
       var allIds = allEpisodeIds();
