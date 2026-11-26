@@ -3,10 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>短剧剧库 · CPS 内容中台</title>
+  <title>短剧列表 · CPS 内容中台</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 已分发平台/上线平台 比例徽标 */
+    .ratio-badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; background:var(--primary-muted); color:var(--primary); font-family:var(--font-mono); font-size:var(--font-size-caption); font-weight:var(--font-weight-medium); cursor:pointer; user-select:none; white-space:nowrap; }
+    .ratio-badge:hover { background:var(--primary-soft); }
+    /* 平台分发详情气泡 */
+    .plat-bubble { position:fixed; z-index:1000; min-width:200px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-2); overflow:hidden; }
+    .plat-bubble-head { display:flex; align-items:center; justify-content:space-between; padding:var(--space-2) var(--space-3); font-weight:var(--font-weight-medium); color:var(--text); border-bottom:1px solid var(--border-faint); }
+    .plat-bubble-ratio { font-family:var(--font-mono); font-size:var(--font-size-caption); color:var(--primary); background:var(--primary-muted); padding:1px 8px; border-radius:999px; }
+    .plat-bubble-row { display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-2) var(--space-3); font-size:var(--font-size-body); color:var(--text); }
+  </style>
 </head>
-<body data-page="library">
+<body data-page="shortplay-list">
   <aside class="app-nav">
     <div class="nav-brand">
       <span class="nav-brand-mark"><i data-icon="clapperboard"></i></span>
@@ -32,8 +42,6 @@
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
       </button>
       <div class="nav-collapse-body">
-        <div class="nav-group-label sub">剧库</div>
-        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
         <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
       </div>
       </nav>
@@ -45,77 +53,289 @@
 
   <main class="app-content">
     <header class="app-topbar">
-      <div class="crumb">内容中台 / <b>短剧剧库</b></div>
+      <div class="crumb">短剧管理 / <b>短剧列表</b></div>
       <div class="topbar-user"><span class="topbar-avatar">舟</span><span>管理员 · 舟横</span></div>
     </header>
 
     <div class="page">
       <div class="page-head reveal">
         <div>
-          <h1 class="page-title">短剧剧库</h1>
-          <p class="page-desc">公司短剧内容的统一归口：一套完整字段一次录入，分发到任意平台时一键补齐、极少重复填写。</p>
-        </div>
-        <div class="page-actions">
-          <a class="btn btn-primary btn-md" href="create.html"><i data-icon="plus"></i>新建短剧</a>
-          <button class="btn btn-secondary btn-md" onclick="exportList()"><i data-icon="download"></i>导出</button>
+          <h1 class="page-title">短剧列表</h1>
+          <p class="page-desc">端原生短剧与挂载短剧的统一列表视图，支持按来源、类型、状态等维度筛选。</p>
         </div>
       </div>
 
-      <div class="stat-grid reveal">
-        <div class="stat-card">
-          <div class="stat-label"><i data-icon="clapperboard"></i>总短剧数</div>
-          <div class="stat-value" id="stat-total">—</div>
-          <div class="stat-foot">跨 7 个平台统一归口</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label"><i data-icon="send"></i>已分发短剧</div>
-          <div class="stat-value" id="stat-distributed">—</div>
-          <div class="stat-foot">至少分发 1 个平台</div>
-        </div>
-      </div>
-
+      <!-- 筛选工具栏 -->
       <div class="panel reveal">
         <div class="panel-head">
-          <div class="panel-title"><i data-icon="list"></i>短剧清单</div>
-          <span class="tag tag-neutral" id="result-count">共 0 条</span>
+          <div class="panel-title"><i data-icon="filter"></i>筛选条件</div>
         </div>
-        <div style="padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--border-faint);">
-          <div class="toolbar">
-            <div class="input">
-              <i data-icon="search"></i>
-              <input class="input-control" id="kw" type="text" placeholder="搜索短剧名称 / ID">
-            </div>
-            <select class="input" id="platform-filter">
-              <option value="">全部分发平台</option>
-              <option value="__none__">尚未分发</option>
-            </select>
-            <button class="btn btn-secondary btn-md" onclick="loadList()"><i data-icon="search"></i>搜索</button>
-            <button class="btn btn-ghost btn-md" onclick="resetFilter()">重置</button>
+        <div class="panel-body" style="display:flex; flex-direction:column; gap:var(--space-4); padding: var(--space-4) var(--space-5);">
+          <div class="filter-grid">
+            <!-- 关键词：按短剧名称或 CPS 短剧 ID 模糊搜索 -->
+            <div class="input"><i data-icon="search"></i><input class="input-control" placeholder="短剧名称 / ID"></div>
+            <!-- 播放源：端原生 / 小程序 / 本地 / 视频号 等投放来源 -->
+            <select class="input"><option value="">播放源</option><option>抖音</option><option>小程序</option><option>本地</option><option>视频号</option></select>
+            <!-- 合作剧类型：承制剧 / 自制剧 / 外部剧 等合作模式 -->
+            <select class="input"><option value="">合作剧类型</option><option>承制剧-微短剧</option><option>承制剧-数字营销中心</option><option>自制剧</option><option>外部剧</option><option>外部承制剧-承制</option><option>外部承制剧-小说</option></select>
+            <!-- 内容团队：负责内容产出的内部团队 -->
+            <select class="input"><option value="">内容团队</option><option>念三团队</option><option>九天团队</option><option>慕白团队</option></select>
+            <!-- 拍摄团队：外部拍摄团队可选填 -->
+            <div class="input"><input class="input-control" placeholder="拍摄团队"></div>
+            <!-- 合作方：外部承制或联合制作方 -->
+            <select class="input"><option value="">合作方</option><option>麦芽传媒</option><option>外部合作方</option></select>
+            <!-- 状态：短剧上架 / 下架 / 隐藏 -->
+            <select class="input"><option value="">状态</option><option>上架</option><option>下架</option><option>隐藏</option></select>
+            <!-- 端原生上架：否 / 是 / 仅端原生 -->
+            <select class="input"><option value="">端原生上架</option><option>否</option><option>是</option><option>仅端原生</option></select>
+            <!-- 短剧类型：剧情题材标签 -->
+            <select class="input"><option value="">短剧类型</option><option>逆袭</option><option>古装</option><option>言情</option><option>家庭</option></select>
+            <!-- 作品分类：男频 / 女频 / 免费 / 付费 -->
+            <select class="input"><option value="">作品分类</option><option>男频</option><option>女频</option><option>免费短剧</option><option>付费短剧</option></select>
+            <!-- 作品标签：贴心标签，可多选 -->
+            <select class="input"><option value="">作品标签</option><option>爽文</option><option>甜宠</option><option>战神</option><option>都市</option><option>逆袭</option></select>
+            <!-- 首次上线：是否首次上线 -->
+            <select class="input"><option value="">首次上线</option><option>是</option><option>否</option></select>
+          </div>
+          <div class="filter-actions">
+            <!-- 按上述条件执行检索 -->
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：搜索')"><i data-icon="search"></i>搜索</button>
+            <!-- 查看操作说明 -->
+            <button class="btn btn-ghost btn-md" onclick="toast('原型示意：操作说明')">操作说明</button>
             <span class="spacer"></span>
+            <!-- 新增短剧：打开「小程序」挂载/编辑弹窗 -->
+            <button class="btn btn-primary btn-md" onclick="openMount()"><i data-icon="plus"></i>新增短剧</button>
+            <!-- 导出当前筛选结果 -->
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：导出')"><i data-icon="download"></i>导出</button>
+            <!-- 批量分配代理商 -->
+            <button class="btn btn-secondary btn-md" onclick="toast('原型示意：批量分配')">批量分配</button>
           </div>
         </div>
-        <div style="overflow-x: auto;">
+      </div>
+
+      <!-- 表格 -->
+      <div class="panel reveal">
+        <div class="panel-head">
+          <div class="panel-title"><i data-icon="list"></i>短剧列表</div>
+          <span class="tag tag-neutral">共 10469 条</span>
+        </div>
+        <div style="overflow-x:auto;">
           <table class="data-table">
             <thead>
               <tr>
+                <!-- 短剧名称 + CPS 短剧 ID -->
                 <th>短剧名称</th>
-                <th>内容分类</th>
-                <th>首发平台</th>
+                <!-- 合作剧类型（承制/自制/外部） -->
                 <th>合作剧类型</th>
-                <th>收费卡点集数 / 总集数</th>
-                <th>更新状态</th>
-                <th>已分发平台</th>
+                <!-- 负责内容团队 -->
+                <th>内容团队</th>
+                <!-- 上架/下架/隐藏 -->
+                <th>短剧状态</th>
+                <!-- 总集数与收费区间 -->
+                <th>总集数 / 收费</th>
+                <!-- 投放播放源 -->
+                <th>播放源</th>
+                <!-- 已分发平台/上线平台：数字比例，点击气泡看详情 -->
+                <th>已分发平台/上线平台</th>
+                <!-- 备注标签（新剧等） -->
+                <th>备注</th>
+                <!-- 小程序分类 -->
+                <th>小程序分类</th>
+                <!-- 创建人 -->
+                <th>创建人</th>
+                <!-- 新增时间 -->
+                <th>新增时间</th>
+                <!-- 行内操作入口 -->
                 <th style="text-align:right">操作</th>
               </tr>
             </thead>
-            <tbody id="drama-tbody"></tbody>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">入选地府外卖员后，短命老公他…</span>
+                      <span class="cell-sub">SPR-20261105-001</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">承制剧-微短剧</span>
+                    <span class="cell-sub">外部承制剧-承制</span>
+                  </div>
+                </td>
+                <td>念三团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">80 集</span>
+                    <span class="cell-sub">开始收费 12 · 上限 66</span>
+                  </div>
+                </td>
+                <td>抖音</td>
+                <td><span class="ratio-badge" data-key="d1" onclick="showPlatBubble(this)" title="点击查看平台分发详情">1/3</span></td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>情感，都市</td>
+                <td>舟横</td>
+                <td>2026-11-05 10:24</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <!-- 管理该剧的剧集/集数 -->
+                  <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <!-- 分配负责运营的代理商 -->
+                  <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <!-- 切换该剧投放的播放源 -->
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 复制该短剧 -->
+                  <a class="link-action" onclick="toast('原型示意：复制')">复制</a>
+                  <!-- 跳转一键分发 -->
+                  <a class="link-action" href="distribute.html?id=SPR-20261105-001">一键分发</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">被关五年后，我成了国医传人</span>
+                      <span class="cell-sub">SPR-20261115-018</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">承制剧-微短剧</span>
+                    <span class="cell-sub">外部承制剧-承制</span>
+                  </div>
+                </td>
+                <td>九天团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">60 集</span>
+                    <span class="cell-sub">开始收费 9 · 上限 30</span>
+                  </div>
+                </td>
+                <td>抖音</td>
+                <td><span class="ratio-badge" data-key="d2" onclick="showPlatBubble(this)" title="点击查看平台分发详情">1/2</span></td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>逆袭，情感</td>
+                <td>林晚</td>
+                <td>2026-11-15 14:02</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <!-- 管理该剧的剧集/集数 -->
+                  <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <!-- 切换该剧投放的播放源 -->
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 复制该短剧 -->
+                  <a class="link-action" onclick="toast('原型示意：复制')">复制</a>
+                  <!-- 跳转一键分发 -->
+                  <a class="link-action" href="distribute.html?id=SPR-20261115-018">一键分发</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">错嫁小叔后，我不傻了</span>
+                      <span class="cell-sub">SPR-20261115-041</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="cell-title">外部承制剧-小说</span></td>
+                <td>慕白团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">90 集</span>
+                    <span class="cell-sub">开始收费 50 · 上限 90</span>
+                  </div>
+                </td>
+                <td>抖音</td>
+                <td><span class="ratio-badge" data-key="d3" onclick="showPlatBubble(this)" title="点击查看平台分发详情">2/3</span></td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>古装，情感</td>
+                <td>舟横</td>
+                <td>2026-11-15 16:30</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <!-- 管理该剧的剧集/集数 -->
+                  <a class="link-action" onclick="toast('原型示意：剧集管理')">剧集管理</a>
+                  <!-- 分配负责运营的代理商 -->
+                  <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <!-- 切换该剧投放的播放源 -->
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 跳转一键分发 -->
+                  <a class="link-action" href="distribute.html?id=SPR-20261115-041">一键分发</a>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="cell-with-poster">
+                    <span class="poster-thumb"><i data-icon="clapperboard"></i></span>
+                    <div class="cell-stack">
+                      <span class="cell-title">重生90，这块地是我的</span>
+                      <span class="cell-sub">SPR-20261115-052</span>
+                      <a class="link-action" onclick="toast('原型示意：更多信息')">更多信息</a>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="cell-title">自制剧</span></td>
+                <td>慕白团队 / 念三团队</td>
+                <td><span class="tag tag-success">上架</span></td>
+                <td>
+                  <div class="cell-stack">
+                    <span class="cell-title">60 集</span>
+                    <span class="cell-sub">开始收费 11 · 上限 30</span>
+                  </div>
+                </td>
+                <td>抖音 / 本地</td>
+                <td><span class="ratio-badge" data-key="d4" onclick="showPlatBubble(this)" title="点击查看平台分发详情">2/2</span></td>
+                <td><span class="tag tag-neutral">新剧</span></td>
+                <td>逆袭，情感</td>
+                <td>顾言</td>
+                <td>2026-11-15 18:45</td>
+                <td style="text-align:right; white-space:nowrap;">
+                  <!-- 分配负责运营的代理商 -->
+                  <a class="link-action" onclick="toast('原型示意：分配代理商')">分配代理商</a>
+                  <!-- 切换该剧投放的播放源 -->
+                  <a class="link-action" onclick="toast('原型示意：切换播放源')">切换播放源</a>
+                  <!-- 进入「新建短剧」步骤页查看/编辑完整信息 -->
+                  <a class="link-action" onclick="goCreate()">短剧信息</a>
+                  <!-- 打开「小程序」挂载/编辑弹窗 -->
+                  <a class="link-action" onclick="openMount()">编辑</a>
+                  <!-- 跳转一键分发 -->
+                  <a class="link-action" href="distribute.html?id=SPR-20261115-052">一键分发</a>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
         <div class="pagination">
-          <span id="pg-info">第 1 页</span>
+          <span>共 10469 条</span>
           <div class="pg-btns">
             <button class="pg-btn">‹</button>
             <button class="pg-btn active">1</button>
+            <button class="pg-btn">2</button>
+            <button class="pg-btn">3</button>
+            <button class="pg-btn">…</button>
+            <button class="pg-btn">524</button>
             <button class="pg-btn">›</button>
           </div>
         </div>
@@ -123,127 +343,225 @@
     </div>
   </main>
 
+  <!-- 新增方式选择弹层 -->
+  <div class="modal-backdrop" id="create-choice" hidden onclick="closeCreateChoice()">
+    <div class="modal modal-sm" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">新增短剧</div>
+        <button class="icon-btn" onclick="closeCreateChoice()"><i data-icon="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="choice-stack">
+          <!-- 端原生：进入「新建短剧」步骤页 -->
+          <div class="choice-card" onclick="goNative()">
+            <span class="choice-icon"><i data-icon="clapperboard"></i></span>
+            <span>
+              <span class="choice-title">端原生</span>
+              <span class="choice-desc">进入短剧剧库「新建短剧」步骤流程</span>
+            </span>
+            <span class="choice-arrow"><i data-icon="chevron-right"></i></span>
+          </div>
+          <!-- 小程序：打开挂载/编辑弹窗 -->
+          <div class="choice-card" onclick="openMount()">
+            <span class="choice-icon"><i data-icon="link"></i></span>
+            <span>
+              <span class="choice-title">小程序</span>
+              <span class="choice-desc">现有的挂载小程序功能，不修改</span>
+            </span>
+            <span class="choice-arrow"><i data-icon="chevron-right"></i></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 挂载弹窗 -->
+  <div class="modal-backdrop" id="mount-modal" hidden onclick="closeMount()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">小程序</div>
+        <button class="icon-btn" onclick="closeMount()"><i data-icon="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-note"><i data-icon="info"></i><span>现有的新增短剧功能，不修改。</span></div>
+        <div class="form-grid">
+          <!-- 作品类型：短剧题材类型，必填 -->
+          <div class="form-field">
+            <label class="form-label">作品类型<span class="req">*</span></label>
+            <select class="input" disabled><option>请选择短剧类型</option></select>
+          </div>
+          <!-- 作品分类：男频/女频等，必填；支持新增分类 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">作品分类<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <button class="btn btn-ghost btn-sm" disabled>新增分类</button>
+            </div>
+            <select class="input" disabled><option>请选择作品分类</option></select>
+          </div>
+          <!-- 作品标签：贴心标签，必填；支持新增标签 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">作品标签<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <button class="btn btn-ghost btn-sm" disabled>新增标签</button>
+            </div>
+            <select class="input" disabled><option>请选择作品标签</option></select>
+          </div>
+          <!-- 短剧名称：必填；可跳转「剧名配置」 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">短剧名称<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <a class="link-action" onclick="event.preventDefault();">剧名配置</a>
+            </div>
+            <div class="input"><input class="input-control" placeholder="请输入短剧名称" disabled></div>
+          </div>
+          <!-- 短剧角标：可选角标标签 -->
+          <div class="form-field">
+            <label class="form-label">短剧角标</label>
+            <select class="input" disabled><option>请选择短剧角标</option></select>
+          </div>
+          <!-- 剧本团队：必填；可跳转「团队管理」 -->
+          <div class="form-field">
+            <div class="field-opt">
+              <label class="form-label">剧本团队<span class="req">*</span></label>
+              <span class="spacer"></span>
+              <a class="link-action" onclick="event.preventDefault();">团队管理</a>
+            </div>
+            <select class="input" disabled><option>请选择剧本团队</option></select>
+          </div>
+          <!-- 拍摄团队：外部拍摄可不填 -->
+          <div class="form-field">
+            <label class="form-label">拍摄团队</label>
+            <div class="input"><input class="input-control" placeholder="请输入，外部拍摄可不填" disabled></div>
+          </div>
+          <!-- 合作剧类型：必填 -->
+          <div class="form-field">
+            <label class="form-label">合作剧类型<span class="req">*</span></label>
+            <select class="input" disabled><option>请选择合作剧类型</option></select>
+          </div>
+          <!-- 项目名称：用于关联搜索项目 -->
+          <div class="form-field">
+            <label class="form-label">项目名称</label>
+            <div class="input"><input class="input-control" placeholder="请输入项目名称进行搜索" disabled></div>
+          </div>
+          <!-- 作品来源：作品的获取/来源渠道 -->
+          <div class="form-field">
+            <label class="form-label">作品来源</label>
+            <select class="input" disabled><option>请选择作品来源</option></select>
+          </div>
+          <!-- 创作团队：负责创作产出 -->
+          <div class="form-field">
+            <label class="form-label">创作团队</label>
+            <select class="input" disabled><option>请选择创作团队</option></select>
+          </div>
+          <!-- 共创团队：联合创作团队 -->
+          <div class="form-field">
+            <label class="form-label">共创团队</label>
+            <select class="input" disabled><option>请选择共创团队</option></select>
+          </div>
+          <!-- 合作方名称：外部合作方 -->
+          <div class="form-field">
+            <label class="form-label">合作方名称</label>
+            <select class="input" disabled><option>请选择合作方名称</option></select>
+          </div>
+          <!-- 腾讯分类：腾讯侧分类，必填 -->
+          <div class="form-field">
+            <label class="form-label">腾讯分类<span class="req">*</span></label>
+            <select class="input" disabled><option>请选择腾讯分类</option></select>
+          </div>
+          <!-- 每集区间定价：最低价与最高价 -->
+          <div class="form-field full">
+            <label class="form-label">每集区间定价</label>
+            <div class="form-grid" style="grid-template-columns:1fr 1fr; column-gap:var(--space-3); row-gap:0;">
+              <div class="form-field">
+                <label class="form-label">最低价<span class="req">*</span></label>
+                <div class="input"><input class="input-control" value="50" disabled></div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">最高价<span class="req">*</span></label>
+                <div class="input"><input class="input-control" value="990" disabled></div>
+              </div>
+            </div>
+          </div>
+          <!-- 端原生上架：否/是/仅端原生，必填 -->
+          <div class="form-field full">
+            <label class="form-label">端原生上架<span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="radio-option"><input type="radio" name="mount-native" disabled><span class="radio-dot"></span>否</label>
+              <label class="radio-option"><input type="radio" name="mount-native" disabled><span class="radio-dot"></span>是</label>
+              <label class="radio-option"><input type="radio" name="mount-native" checked disabled><span class="radio-dot"></span>仅端原生</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <!-- 取消并关闭弹窗 -->
+        <button class="btn btn-secondary btn-md" onclick="closeMount()">取消</button>
+        <!-- 提交当前编辑表单 -->
+        <button class="btn btn-primary btn-md" onclick="submitMount()">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 平台分发详情气泡 -->
+  <div id="plat-bubble" class="plat-bubble" hidden></div>
+
   <script src="components.js"></script>
-  <script src="mock.js"></script>
-  <script src="api.js"></script>
   <script>
-    function platformName(k) {
-      var p = PLATFORMS.find(function (x) { return x.key === k; });
-      return p ? p.name : k;
+    // 跳转到「新建短剧」步骤页（端原生完整新建/编辑流程）
+    function goCreate() { window.location.href = 'create.html'; }
+
+    // 打开「新增方式选择」弹层
+    function openCreateChoice() { document.getElementById('create-choice').hidden = false; }
+
+    // 关闭「新增方式选择」弹层
+    function closeCreateChoice() { document.getElementById('create-choice').hidden = true; }
+
+    // 选择「端原生」：进入新建短剧步骤页
+    function goNative() { window.location.href = 'create.html'; }
+
+    // 打开「小程序」挂载/编辑弹窗（新增短剧与编辑共用的入口）
+    function openMount() {
+      document.getElementById('create-choice').hidden = true;
+      document.getElementById('mount-modal').hidden = false;
     }
 
-    /* 内容分类：根据 shortplayType（内容子分类）反查一级分类，展示「一级-子分类」 */
-    function contentCategoryLabel(d) {
-      var st = d.shortplayType || '';
-      var l1 = '';
-      Object.keys(CONTENT_CATEGORIES).forEach(function (k) {
-        if (CONTENT_CATEGORIES[k].indexOf(st) > -1) l1 = k;
+    // 关闭「小程序」挂载/编辑弹窗
+    function closeMount() { document.getElementById('mount-modal').hidden = true; }
+
+    // 提交「小程序」挂载/编辑结果（当前为原型示意）
+    function submitMount() {
+      closeMount();
+      toast('现有的新增短剧功能，暂不修改');
+    }
+
+    /* ===== 已分发平台/上线平台 比例气泡 ===== */
+    var PLAT_DETAIL = {
+      d1: [['微信小程序', 0], ['抖音小程序', 1], ['OPPO端原生', 0]],
+      d2: [['微信小程序', 0], ['抖音小程序', 1]],
+      d3: [['微信小程序', 1], ['抖音小程序', 1], ['OPPO端原生', 0]],
+      d4: [['抖音小程序', 1], ['OPPO端原生', 1]]
+    };
+    function showPlatBubble(anchor) {
+      var key = anchor.getAttribute('data-key');
+      var rows = PLAT_DETAIL[key] || [];
+      var done = rows.filter(function (r) { return r[1] === 1; }).length;
+      var b = document.getElementById('plat-bubble');
+      var html = '<div class="plat-bubble-head"><span>平台分发详情</span><span class="plat-bubble-ratio">' + done + '/' + rows.length + '</span></div>';
+      rows.forEach(function (r) {
+        html += '<div class="plat-bubble-row"><span>' + r[0] + '</span><span class="tag ' + (r[1] === 1 ? 'tag-success' : 'tag-neutral') + '">' + (r[1] === 1 ? '已分发' : '待分发') + '</span></div>';
       });
-      return l1 ? (l1 + '-' + st) : st;
+      b.innerHTML = html;
+      b.hidden = false;
+      var rect = anchor.getBoundingClientRect();
+      b.style.top = (rect.bottom + 8) + 'px';
+      b.style.left = Math.min(rect.left, window.innerWidth - 220) + 'px';
     }
-
-    function renderPlatformFilter() {
-      var sel = document.getElementById('platform-filter');
-      sel.innerHTML = '<option value="">全部分发平台</option><option value="__none__">尚未分发</option>' +
-        PLATFORMS.map(function (p) { return '<option value="' + p.key + '">' + p.name + '</option>'; }).join('');
-    }
-
-    function renderStats() {
-      var ds = DB.dramas;
-      var total = ds.length;
-      var distributed = ds.filter(function (d) { return d.platforms.length > 0; }).length;
-      document.getElementById('stat-total').textContent = total;
-      document.getElementById('stat-distributed').textContent = distributed;
-    }
-
-    function renderRows(list) {
-      var tb = document.getElementById('drama-tbody');
-      document.getElementById('result-count').textContent = '共 ' + list.length + ' 条';
-      if (!list.length) {
-        tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i data-icon="search"></i><span class="empty-title">未找到匹配的短剧</span></div></td></tr>';
-        injectIcons();
-        return;
-      }
-      tb.innerHTML = list.map(function (d) {
-        var badges = d.platforms.slice(0, 3).map(function (p) {
-          return '<span class="platform-badge">' + platformName(p) + '</span>';
-        }).join('');
-        var more = d.platforms.length > 3 ? '<span class="mono-badge">+' + (d.platforms.length - 3) + '</span>' : '';
-        var plat = d.platforms.length ? badges + more : '<span class="cell-sub">尚未分发</span>';
-        var chargeCell = '<div class="cell-stack"><span class="cell-title">' + (d.chargeEpisode || 0) + ' / ' + d.totalEpisodes + '</span>' +
-          '<span class="cell-sub">第 ' + (d.chargeEpisode || 0) + ' 集起付费</span></div>';
-        var debutText = (d.debutPlatforms || []).length ? d.debutPlatforms.join('、') : '—';
-        var coopText = (d.coopTypes || []).length ? d.coopTypes.join('、') : '—';
-        return '<tr>' +
-          '<td><div class="cell-with-poster"><span class="poster-thumb" style="background:' + d.cover + '20; color:' + d.cover + '">' + d.title.charAt(0) + '</span>' +
-            '<div class="cell-stack"><span class="cell-title">' + d.title + '</span>' +
-            '<span class="cell-sub">短剧ID <span class="mono-badge">' + d.id + '</span> · 项目ID <span class="mono-badge">' + (d.project || '—') + '</span></span></div></div></td>' +
-          '<td><div class="cell-stack"><span>' + contentCategoryLabel(d) + '</span></div></td>' +
-          '<td><div class="cell-stack"><span class="cell-title">' + debutText + '</span></div></td>' +
-          '<td><div class="cell-stack"><span class="cell-title">' + coopText + '</span></div></td>' +
-          '<td class="num">' + chargeCell + '</td>' +
-          '<td><span class="tag ' + (d.updateStatus === '已完结' ? 'tag-neutral' : 'tag-primary') + '">' + d.updateStatus + '</span></td>' +
-          '<td>' + plat + '</td>' +
-          '<td style="text-align:right; white-space:nowrap;"><a class="link-action" href="create.html?id=' + d.id + '">编辑</a><a class="link-action" href="distribute.html?id=' + d.id + '">一键分发</a></td>' +
-          '</tr>';
-      }).join('');
-      injectIcons();
-    }
-
-    async function loadList() {
-      var kw = document.getElementById('kw').value.trim();
-      var platform = document.getElementById('platform-filter').value;
-      var tb = document.getElementById('drama-tbody');
-      tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="skeleton" style="width:70%;height:14px"></div><div class="skeleton" style="width:50%;height:14px"></div></div></td></tr>';
-      var res = await API.fetchDramaList({ kw: kw, platform: platform });
-      renderRows(res.data);
-    }
-
-    function csvCell(v) {
-      var s = v == null ? '' : String(v);
-      if (/[",\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
-      return s;
-    }
-
-    async function exportList() {
-      var kw = document.getElementById('kw').value.trim();
-      var platform = document.getElementById('platform-filter').value;
-      var res = await API.fetchDramaList({ kw: kw, platform: platform });
-      var list = res.data;
-      if (!list.length) { toast('当前筛选条件下没有可导出的数据'); return; }
-
-      var head = ['短剧ID', '项目ID', '短剧名称', '类型', '题材分类', '首发平台', '合作剧类型', '收费卡点集数', '总集数', '更新状态', '已分发平台'];
-      var rows = list.map(function (d) {
-        var plats = d.platforms.length ? d.platforms.map(platformName).join('、') : '尚未分发';
-        var debut = (d.debutPlatforms || []).join('、') || '—';
-        var coop = (d.coopTypes || []).join('、') || '—';
-        return [d.id, (d.project || '—'), d.title, d.shortplayType, d.category, debut, coop, (d.chargeEpisode || 0), d.totalEpisodes, d.updateStatus, plats];
-      });
-
-      var csv = '\uFEFF' + [head].concat(rows).map(function (r) { return r.map(csvCell).join(','); }).join('\n');
-      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      var a = document.createElement('a');
-      var url = URL.createObjectURL(blob);
-      a.href = url;
-      a.download = '短剧剧库_导出_' + new Date().toISOString().slice(0, 10) + '.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast('已导出 ' + list.length + ' 条短剧');
-    }
-
-    function resetFilter() {
-      document.getElementById('kw').value = '';
-      document.getElementById('platform-filter').value = '';
-      loadList();
-      toast('筛选条件已重置');
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      renderPlatformFilter();
-      renderStats();
-      loadList();
+    function closePlatBubble() { document.getElementById('plat-bubble').hidden = true; }
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest || !e.target.closest('.ratio-badge')) closePlatBubble();
     });
   </script>
 </body>

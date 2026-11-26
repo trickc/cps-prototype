@@ -124,8 +124,6 @@
         <i data-icon="chevron-down" class="nav-collapse-caret"></i>
       </button>
       <div class="nav-collapse-body">
-        <div class="nav-group-label sub">剧库</div>
-        <a class="nav-item" data-nav="library" href="index.html"><i data-icon="clapperboard"></i><span>短剧剧库</span></a>
         <a class="nav-item" data-nav="account" href="account.html"><i data-icon="users"></i><span>账号管理</span></a>
       </div>
       </nav>
@@ -462,7 +460,7 @@
               <div class="panel-body">
                 <div class="alert alert-info"><i data-icon="info"></i><span>剧集统一在「新增剧集」页面录入系统，此处把系统里已存在的剧集关联到本短剧。左侧展示系统剧集池，右侧为本短剧关联的剧集；可点击选中（支持多选）后移动，或双击直接移动。</span></div>
                 <div class="toolbar" style="margin-bottom: var(--space-3);">
-                  <a class="btn btn-ghost btn-md" href="episodes-add.html" target="_blank" rel="noopener"><i data-icon="cloud-upload"></i>打开「新增剧集」（新标签）</a>
+                  <button class="btn btn-ghost btn-md" onclick="openEpisodeAddModal()"><i data-icon="cloud-upload"></i>打开「新增剧集」</button>
                   <span class="spacer"></span>
                   <span class="form-hint">已关联 <span id="ep-sel-count" style="color:var(--primary);font-weight:500;">0</span> 集</span>
                 </div>
@@ -561,6 +559,59 @@
       </div>
     </div>
   </main>
+
+  <!-- 新增剧集弹窗（关联剧集步骤内联新增，功能等同「新增剧集」页面） -->
+  <div class="modal-backdrop" id="ep-add-modal" hidden onclick="epmClose()">
+    <div class="modal modal-lg" onclick="event.stopPropagation()">
+      <div class="modal-head">
+        <div class="modal-title">新增剧集</div>
+        <button class="icon-btn" onclick="epmClose()"><i data-icon="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-note"><i data-icon="info"></i><span>先填公共信息，再批量上传视频；文件名以「第n集」结尾时自动识别集数。提交后进入系统剧集池，可立即关联到本短剧。</span></div>
+        <div class="form-grid" style="margin-bottom: var(--space-4);">
+          <div class="form-field">
+            <label class="form-label">横 / 竖版<span class="req">*</span></label>
+            <select class="input" id="epm-orientation"><option>竖视频</option><option>横视频</option></select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">视频状态<span class="req">*</span></label>
+            <select class="input" id="epm-video-status"><option value="启用">启用</option><option value="禁用">禁用</option></select>
+          </div>
+        </div>
+        <div class="upload-box" style="width:100%; min-height:110px;" onclick="document.getElementById('epm-file-input').click()">
+          <i data-icon="cloud-upload"></i>
+          <span class="up-text">点击选择多个视频文件（或拖拽到此，支持 mp4 / mov）</span>
+          <span class="form-hint">文件名以「第n集」结尾时自动识别集数</span>
+        </div>
+        <input type="file" id="epm-file-input" multiple accept="video/*" style="display:none" onchange="epmHandleFiles(this.files)">
+        <div class="toolbar" style="margin-top: var(--space-4); margin-bottom:0;">
+          <button class="btn btn-secondary btn-md" onclick="epmLoadDemoFiles()"><i data-icon="sparkles"></i>载入示例文件</button>
+          <span class="spacer"></span>
+          <span class="form-hint">文件名以「第n集」结尾时自动识别集数</span>
+        </div>
+        <div style="overflow-x:auto; margin-top: var(--space-4);">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>视频文件</th>
+                <th>时长</th>
+                <th>大小</th>
+                <th style="text-align:right">操作</th>
+              </tr>
+            </thead>
+            <tbody id="epm-tbody">
+              <tr><td colspan="4"><div class="empty-state"><i data-icon="cloud-upload"></i><span class="empty-title">尚未添加视频文件</span></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary btn-md" onclick="epmClose()">取消</button>
+        <button class="btn btn-primary btn-md" id="epm-submit-btn" onclick="epmSubmit()"><i data-icon="send"></i>提交全部剧集</button>
+      </div>
+    </div>
+  </div>
 
   <script src="components.js"></script>
   <script src="mock.js"></script>
@@ -1550,6 +1601,132 @@
       if (matches.length > top.length) html += '<div class="dup-more">… 等共 ' + matches.length + ' 条相近剧名</div>';
       box.innerHTML = html;
       box.style.display = 'flex';
+    }
+
+    /* ---- 新增剧集弹窗（功能等同「新增剧集」页面：公共信息 + 批量上传，提交后进入系统剧集池） ---- */
+    var epmBatch = [];
+    var epmKey = 0;
+
+    function epmParseEpisodeNo(name) {
+      var base = String(name).replace(/\.[^.]+$/, '');
+      var m = base.match(/第(\d+)\s*集$/);
+      return m ? Number(m[1]) : null;
+    }
+
+    function epmFormatSize(bytes) {
+      if (bytes == null) return '—';
+      if (bytes < 1024) return bytes + 'B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+      return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+    }
+
+    function epmRender() {
+      var tb = document.getElementById('epm-tbody');
+      if (!epmBatch.length) {
+        tb.innerHTML = '<tr><td colspan="4"><div class="empty-state"><i data-icon="cloud-upload"></i><span class="empty-title">尚未添加视频文件</span></div></td></tr>';
+        injectIcons();
+        return;
+      }
+      tb.innerHTML = epmBatch.map(function (b) {
+        return '<tr>' +
+          '<td><div class="cell-stack"><span class="cell-title">' + b.fileName + '</span><span class="cell-sub">' + (b.fileName.split('.').pop() || '') + '</span></div></td>' +
+          '<td class="num">' + b.duration + '</td>' +
+          '<td class="num">' + b.size + '</td>' +
+          '<td style="text-align:right"><a class="link-action danger" onclick="epmRemove(' + b.key + ')">删除</a></td>' +
+          '</tr>';
+      }).join('');
+      injectIcons();
+    }
+
+    function epmRemove(key) {
+      epmBatch = epmBatch.filter(function (x) { return x.key !== key; });
+      epmRender();
+    }
+
+    function epmAddFiles(files) {
+      [].forEach.call(files, function (f) {
+        var name = f.name;
+        var seq = epmParseEpisodeNo(name);
+        epmBatch.push({
+          key: epmKey++,
+          fileName: name,
+          seq: seq,
+          duration: seq != null ? '2:' + (30 + (seq % 30)) : '待解析',
+          size: epmFormatSize(f.size)
+        });
+      });
+      epmRender();
+      var map = {}, dup = [];
+      epmBatch.forEach(function (b) {
+        if (b.seq == null) return;
+        if (map[b.seq]) dup.push(b.seq);
+        map[b.seq] = true;
+      });
+      if (dup.length) toast('存在重复集数：第 ' + dup.join('、') + ' 集');
+    }
+
+    function epmHandleFiles(files) {
+      if (!files || !files.length) return;
+      epmAddFiles(files);
+      document.getElementById('epm-file-input').value = '';
+    }
+
+    function epmLoadDemoFiles() {
+      var name = '示例短剧';
+      epmAddFiles([
+        { name: name + '-第1集.mp4', size: 28400000 },
+        { name: name + '-第2集.mp4', size: 27900000 },
+        { name: name + '-第3集.mp4', size: 29100000 },
+        { name: name + '-宣传片.mp4', size: 15000000 }
+      ]);
+    }
+
+    function epmParseDur(s) {
+      if (typeof s !== 'string') return 150;
+      var m = s.match(/(\d+):(\d+)/);
+      if (m) return Number(m[1]) * 60 + Number(m[2]);
+      return 150;
+    }
+
+    function openEpisodeAddModal() {
+      document.getElementById('ep-add-modal').hidden = false;
+      epmRender();
+    }
+
+    function epmClose() {
+      document.getElementById('ep-add-modal').hidden = true;
+    }
+
+    function epmSubmit() {
+      if (!epmBatch.length) { toast('请先添加视频文件'); return; }
+      var orientation = document.getElementById('epm-orientation').value;
+      var videoStatus = document.getElementById('epm-video-status').value;
+      var covers = ['#CFE0DA', '#E8D5B5', '#CBD6DF', '#E6D2C0', '#D9E4E0'];
+      var added = 0;
+      epmBatch.forEach(function (b) {
+        DB.episodes.push({
+          id: 'ENEW' + (1000 + b.key),
+          seq: b.seq != null ? b.seq : (DB.episodes.length + 1 + added),
+          cover: covers[added % covers.length],
+          fileName: b.fileName,
+          duration: epmParseDur(b.duration),
+          size: (!b.size || b.size === '待解析' || b.size === '—') ? '—' : b.size,
+          width: orientation === '竖视频' ? 720 : 1280,
+          height: orientation === '竖视频' ? 1280 : 720,
+          definition: '1080P',
+          orientation: orientation,
+          charge: false,
+          transcode: '执行中',
+          videoStatus: videoStatus
+        });
+        added++;
+      });
+      epmBatch = [];
+      epmRender();
+      epmClose();
+      // 刷新「关联剧集」步骤的系统剧集池，让新增剧集可立即关联到本短剧
+      if (typeof renderTransfer === 'function') renderTransfer();
+      toast('已新增 ' + added + ' 集到系统剧集池（' + orientation + ' · ' + videoStatus + '）');
     }
 
     document.addEventListener('DOMContentLoaded', function () {
